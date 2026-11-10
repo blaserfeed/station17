@@ -1,0 +1,130 @@
+[
+  {
+    "path": "static/vendor/vision_bundle.mjs",
+    "source": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/vision_bundle.mjs",
+    "bytes": 137735,
+    "sha256": "40f4123dfcd75cfa58add046919cc6f52fde66f009ff582997c09ba54c6ba27c"
+  },
+  {
+    "path": "static/vendor/wasm/vision_wasm_internal.js",
+    "source": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm/vision_wasm_internal.js",
+    "bytes": 204284,
+    "sha256": "4a97e2520ba506c680ecd6ba6acfb146888afa0e2746d57f205352bc6ebb82eb"
+  },
+  {
+    "path": "static/vendor/wasm/vision_wasm_internal.wasm",
+    "source": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm/vision_wasm_internal.wasm",
+    "bytes": 9574032,
+    "sha256": "f00ec4731faa23b3e714d00e88d4d10e2df5c0a427d3a2b4ae6e3526fdd14ef7"
+  },
+  {
+    "path": "static/vendor/wasm/vision_wasm_nosimd_internal.js",
+    "source": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm/vision_wasm_nosimd_internal.js",
+    "bytes": 204137,
+    "sha256": "927def7b465c51b86e4b3060f93646aca4e27121f4b8fc0483786e407ea9cf1f"
+  },
+  {
+    "path": "static/vendor/wasm/vision_wasm_nosimd_internal.wasm",
+    "source": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm/vision_wasm_nosimd_internal.wasm",
+    "bytes": 9448638,
+    "sha256": "3821ea9b1f7fb8c549ef2a064ef5c85750bf375c545a49fd6eea0df44a95f1f4"
+  },
+  {
+    "path": "static/vendor/gesture_recognizer.task",
+    "source": "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task",
+    "bytes": 8373440,
+    "sha256": "97952348cf6a6a4915c2ea1496b4b37ebabc50cbbf80571435643c455f2b0482"
+  },
+  {
+    "path": "static/vendor/three.module.js",
+    "source": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+    "bytes": 603113,
+    "sha256": "c8211c69345d2e9949dc7a8ac969380497aa0600a5a8ac6a459c8cd02dd9cb8a"
+  },
+  {
+    "path": "static/vendor/three.core.js",
+    "source": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.core.js",
+    "bytes": 1403455,
+    "sha256": "eb077d2417f61d3e6d9264c317cabc4ea35769ed6b0ab533067292a550784c20"
+  },
+  {
+    "path": "static/vendor/LICENSE-three.txt",
+    "source": "https://cdn.jsdelivr.net/npm/three@0.180.0/LICENSE",
+    "bytes": 1081,
+    "sha256": "bfe119ea4fd413f5f7ca3fcd63adb0c4a073ed39daa2fe7d3e6b769e21272601"
+  },
+  {
+    "path": "static/vendor/LICENSE-mediapipe.txt",
+    "source": "https://raw.githubusercontent.com/google-ai-edge/mediapipe/master/LICENSE",
+    "bytes": 12331,
+    "sha256": "8707eef0533987efc5b155d64761eeb6e20793f50b9bd1a68dad1cf4719d0ed8"
+  },
+  {
+    "path": "tests/fixtures/thumbs_up.jpg",
+    "source": "https://storage.googleapis.com/mediapipe-tasks/gesture_recognizer/thumbs_up.jpg",
+    "bytes": 28894,
+    "sha256": "2aee0e3a69ba5f0d3287597e61d265f4f3ac2a44ccec198dddd2639b0c8ef7ba"
+  },
+  {
+    "path": "tests/fixtures/thumbs_down.jpg",
+    "source": "https://storage.googleapis.com/mediapipe-tasks/gesture_recognizer/thumbs_down.jpg",
+    "bytes": 46651,
+    "sha256": "080b589bf3b91ba10cc6c03645be3b5b491a8ca8c8f7d65b5f32c563ae266af9"
+  },
+  {
+    "path": "tests/fixtures/victory.jpg",
+    "source": "https://storage.googleapis.com/mediapipe-tasks/gesture_recognizer/victory.jpg",
+    "bytes": 19125,
+    "sha256": "6ac265f3ace6a6c4ac4a9079b63fcce4ab6517272afb1e430857f55ef324fde6"
+  },
+  {
+    "path": "tests/fixtures/pointing_up.jpg",
+    "source": "https://storage.googleapis.com/mediapipe-tasks/gesture_recognizer/pointing_up.jpg",
+    "bytes": 36757,
+    "sha256": "f4a701316b63dd8fa56e622f2b3042766369ccc189f0d89513f803cd985b993b"
+  },
+  {
+    "path": "static/vendor/vosk.js",
+    "source": "https://cdn.jsdelivr.net/npm/vosk-browser@0.0.8/dist/vosk.js",
+    "bytes": 5804489,
+    "sha256": "9869da01ea6a148775bab396161d14d490fe224c8cdff6d2493debd08865f3b6",
+    "modified": true,
+    "note": "Модель переупакована с директориями 755; библиотека использует FS в памяти."
+  },
+  {
+    "path": "static/vendor/vosk-ru.tar.gz",
+    "source": "https://alphacephei.com/vosk/models/vosk-model-small-ru-0.22.zip",
+    "bytes": 46224377,
+    "sha256": "6dd85b6f374f761e09e441d7998238d4e02e71b5175fd4b5f873cb818ad367f8",
+    "modified": false,
+    "note": "Модель переупакована с директориями 755; библиотека использует FS в памяти."
+  },
+  {
+    "path": "static/assets/anna.glb",
+    "source": "https://www.innerscene.com/tools/library/3d-parts/locomotion-collection-maya-3d-person-animated-1499b2fd",
+    "license": "CC0 1.0",
+    "bytes": 6330268,
+    "sha256": "e86d71c1fcb2e813a8226de283cf8e39037da14b371b88b5c6ff98067e221082"
+  },
+  {
+    "path": "static/assets/sergey.glb",
+    "source": "https://www.innerscene.com/tools/library/3d-parts/idle-standing-sam-3d-person-animated-1f9f1217",
+    "license": "CC0 1.0",
+    "bytes": 5429748,
+    "sha256": "7253275d8342ed14b1e22743dcc51e0106f00ba8a19ff17a1afbf6117b38759d"
+  },
+  {
+    "path": "static/vendor/GLTFLoader.js",
+    "source": "https://github.com/mrdoob/three.js/blob/r180/examples/jsm/loaders/GLTFLoader.js",
+    "license": "MIT",
+    "bytes": 114744,
+    "sha256": "2904f2823e23d5bc1d64512bf4c0d777ac44d728d47c34a9e3d48ce8ef6b761d"
+  },
+  {
+    "path": "static/vendor/BufferGeometryUtils.js",
+    "source": "https://github.com/mrdoob/three.js/blob/r180/examples/jsm/utils/BufferGeometryUtils.js",
+    "license": "MIT",
+    "bytes": 35551,
+    "sha256": "248b3e8420bd3de805ca01845c1b0cc62aa2766f3c56bdcead265e306f8e715c"
+  }
+]

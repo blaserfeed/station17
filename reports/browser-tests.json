@@ -1,0 +1,151 @@
+{
+  "run_at": "2026-10-28T13:43:45.515Z",
+  "checks": [
+    {
+      "name": "Start → Main Menu → Game",
+      "status": "Pass"
+    },
+    {
+      "name": "Mouse look turns without holding a button",
+      "status": "Pass"
+    },
+    {
+      "name": "V switches first and third person",
+      "status": "Pass"
+    },
+    {
+      "name": "Escape releases cursor and pauses; Resume restores gameplay",
+      "status": "Pass"
+    },
+    {
+      "name": "Smooth acceleration, braking and gait",
+      "status": "Pass",
+      "slow": 1.2881619172941692,
+      "fast": 4.175214970930536,
+      "braking": 2.53828683795047,
+      "stopped": 0
+    },
+    {
+      "name": "Walk to Sergey and earn trust",
+      "status": "Pass"
+    },
+    {
+      "name": "Circuit puzzle: broken path rejected, rotations restore power",
+      "status": "Pass"
+    },
+    {
+      "name": "Pause freezes physics and saves settings",
+      "status": "Pass"
+    },
+    {
+      "name": "Valve replaced using drawing and repaired power",
+      "status": "Pass"
+    },
+    {
+      "name": "3D traversal, collection, terminals and decision 1978",
+      "status": "Pass"
+    },
+    {
+      "name": "Sandbox success / failure / cancel; progress preserved",
+      "status": "Pass"
+    },
+    {
+      "name": "Device travels backward and forward; repairs, score and past consequences persist",
+      "status": "Pass"
+    },
+    {
+      "name": "3D traversal, collection, terminals and decision 2026",
+      "status": "Pass"
+    },
+    {
+      "name": "3D traversal, collection, terminals and decision 2074",
+      "status": "Pass"
+    },
+    {
+      "name": "Complete true ending with 450 points",
+      "status": "Pass"
+    },
+    {
+      "name": "Reload restores result and entitlement",
+      "status": "Pass"
+    },
+    {
+      "name": "New history keeps access; repeated empathy has no duplicate bonus",
+      "status": "Pass"
+    },
+    {
+      "name": "Held gesture remains latched across modal reset",
+      "status": "Pass"
+    },
+    {
+      "name": "Real MediaPipe inference: 4 official photos + negative image",
+      "status": "Pass"
+    },
+    {
+      "name": "Real video inference drives the player; camera stop closes track",
+      "status": "Pass",
+      "z1": 17.041,
+      "z2": 13.858,
+      "input": "synthetic canvas camera, not a live human"
+    },
+    {
+      "name": "Camera permission failure stops cleanly",
+      "status": "Pass"
+    },
+    {
+      "name": "Game Over and checkpoint retry",
+      "status": "Pass"
+    },
+    {
+      "name": "Compact desktop layout 900px",
+      "status": "Pass"
+    },
+    {
+      "name": "No uncaught browser errors",
+      "status": "Pass"
+    }
+  ],
+  "vision": [
+    {
+      "image": "thumbs_up",
+      "expected": "Thumb_Up",
+      "actual": "Thumb_Up",
+      "score": 0.7324019074440002,
+      "correct": true
+    },
+    {
+      "image": "thumbs_down",
+      "expected": "Thumb_Down",
+      "actual": "Thumb_Down",
+      "score": 0.7727715969085693,
+      "correct": true
+    },
+    {
+      "image": "victory",
+      "expected": "Victory",
+      "actual": "Victory",
+      "score": 0.908007800579071,
+      "correct": true
+    },
+    {
+      "image": "pointing_up",
+      "expected": "Pointing_Up",
+      "actual": "Pointing_Up",
+      "score": 0.8197491765022278,
+      "correct": true
+    },
+    {
+      "image": "blank",
+      "expected": null,
+      "actual": null,
+      "score": 0,
+      "correct": true
+    }
+  ],
+  "pageErrors": [],
+  "notes": [
+    "Keyboard main route uses real movement and collision.",
+    "MediaPipe photos and synthetic video are real inference; no live human-camera accuracy claimed.",
+    "Microphone ASR is tested separately using real Vosk inference on synthetic Russian audio."
+  ]
+}

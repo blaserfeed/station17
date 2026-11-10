@@ -1,0 +1,46 @@
+{
+  "results": [
+    {
+      "result": [
+        {
+          "conf": 1,
+          "end": 1.35,
+          "start": 0.96,
+          "word": "камера"
+        },
+        {
+          "conf": 1,
+          "end": 1.86,
+          "start": 1.35,
+          "word": "вправо"
+        }
+      ],
+      "text": "камера вправо"
+    }
+  ],
+  "errors": [],
+  "input": "Synthetic Russian audio: Milena, камера вправо",
+  "samples": 81179,
+  "sampleRate": 16000,
+  "pipeline": {
+    "before": {
+      "position": [
+        -2,
+        21
+      ],
+      "yaw": 0.7853981633974483
+    },
+    "after": {
+      "position": [
+        -2,
+        21
+      ],
+      "yaw": 1.6857981634034087
+    },
+    "status": "Услышано: камера вправо",
+    "trackEnded": true
+  },
+  "verifiedASR": true,
+  "verifiedCamera": true,
+  "positionUnchanged": true
+}

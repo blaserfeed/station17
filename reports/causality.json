@@ -1,0 +1,17 @@
+{
+  "status": "Pass",
+  "input": "Controlled server fixture; identical camera positions in screenshots",
+  "before": {
+    "year": 2026,
+    "flooded": true,
+    "waterMesh": true,
+    "barrier": true
+  },
+  "after": {
+    "year": 2026,
+    "flooded": false,
+    "waterMesh": false,
+    "barrier": false
+  },
+  "pageErrors": []
+}

@@ -1,0 +1,35 @@
+{
+  "name": "Станция 17 Последняя смена",
+  "version": "4.2.0",
+  "date": "2026-11-06",
+  "status": "Готова к сдаче: 168-канальный риг Анны восстановлен без деформаций бёдер и с живой пластикой пальцев и плеч, скорость увеличена (ходьба 3.5 м/с, бег 6.5 м/с), текстуры рубашки и причёски исправлены, атлетичный прыжок откалиброван, все 78 тестов пройдены.",
+  "story_version": 4,
+  "epochs": [
+    1978,
+    2026,
+    2074
+  ],
+  "area_m2": 3888,
+  "hazards_removed": true,
+  "puzzles": [
+    "переключение клапана по отчёту из будущего",
+    "сейф в архиве по желанию"
+  ],
+  "timer_seconds": 1500,
+  "timeout_cinematic_seconds": 9,
+  "functional_passed": 78,
+  "controls_passed": 11,
+  "browser_checks_passed": 7,
+  "timer_ui_checks_passed": 7,
+  "ai": [
+    "Vosk русская речь локально",
+    "MediaPipe две руки локально"
+  ],
+  "human_testing": "Не проводилось агентом. Контроль моделей синтетический.",
+  "runtime": "Python 3.10+, браузер WebGL. Без внешних Python-пакетов.",
+  "rescue_route_transfers": 4,
+  "character_models": [
+    "Анна (168-канальный скелет: Idle_Standing, Walk, Run, Jog, Jump)",
+    "Сергей (Idle_Standing)"
+  ]
+}

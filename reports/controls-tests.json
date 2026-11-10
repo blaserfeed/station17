@@ -1,0 +1,58 @@
+{
+  "run_at": "2026-11-06T12:33:20.489Z",
+  "total": 13,
+  "checks": [
+    {
+      "name": "Movement and camera act simultaneously",
+      "status": "Pass"
+    },
+    {
+      "name": "Hand order cannot swap roles",
+      "status": "Pass"
+    },
+    {
+      "name": "Missing camera hand does not stop movement",
+      "status": "Pass"
+    },
+    {
+      "name": "Missing movement hand does not stop camera",
+      "status": "Pass"
+    },
+    {
+      "name": "Palm stops camera without stopping character",
+      "status": "Pass"
+    },
+    {
+      "name": "Swap hand preference reverses roles",
+      "status": "Pass"
+    },
+    {
+      "name": "Weak or unknown gesture stops its own channel",
+      "status": "Pass"
+    },
+    {
+      "name": "Hands lost stop both channels",
+      "status": "Pass"
+    },
+    {
+      "name": "Camera hold does not trigger movement actions",
+      "status": "Pass"
+    },
+    {
+      "name": "Voice camera commands and stop",
+      "status": "Pass"
+    },
+    {
+      "name": "Voice check alias reaches puzzle verification",
+      "status": "Pass"
+    },
+    {
+      "name": "Voice accepts a phrase inside a longer utterance",
+      "status": "Pass"
+    },
+    {
+      "name": "A brief weak frame keeps the current gesture",
+      "status": "Pass"
+    }
+  ]
+}

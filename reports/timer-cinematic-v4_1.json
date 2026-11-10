@@ -1,0 +1,40 @@
+{
+  "run_at": "2026-11-06T09:33:33.447Z",
+  "checks": [
+    {
+      "name": "Countdown starts only after opening message",
+      "status": "Pass"
+    },
+    {
+      "name": "Escape pauses countdown",
+      "status": "Pass"
+    },
+    {
+      "name": "Resume continues remaining time",
+      "status": "Pass"
+    },
+    {
+      "name": "Zero triggers cinematic and disables gameplay",
+      "status": "Pass"
+    },
+    {
+      "name": "Real 3D water rises in present-day station",
+      "status": "Pass"
+    },
+    {
+      "name": "Cinematic ends on Game Over",
+      "status": "Pass"
+    },
+    {
+      "name": "Retry starts a fresh 25-minute attempt",
+      "status": "Pass"
+    }
+  ],
+  "water": {
+    "height": 1.187630666663647,
+    "lights": 41.60403913459861,
+    "year": 1
+  },
+  "pageErrors": [],
+  "fixture": "Only an isolated QA database was set to 1.2 seconds; 1500-second rules are tested separately."
+}

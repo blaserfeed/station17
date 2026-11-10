@@ -1,0 +1,371 @@
+[
+  {
+    "id": "W01",
+    "title": "Подтвердить устав и SRS недель 8–9",
+    "owner": "Аяжан",
+    "week": 10,
+    "estimate_hours": 2,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W02",
+    "title": "Зафиксировать переход к 3D и выбор голоса/жестов",
+    "owner": "Оба",
+    "week": 10,
+    "estimate_hours": 2,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W03",
+    "title": "Подготовить WBS и Kanban",
+    "owner": "Аяжан",
+    "week": 10,
+    "estimate_hours": 3,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W04",
+    "title": "Описать архитектуру и API",
+    "owner": "Жайдар",
+    "week": 10,
+    "estimate_hours": 3,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W05",
+    "title": "Оценить риски и зависимости",
+    "owner": "Оба",
+    "week": 10,
+    "estimate_hours": 2,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W06",
+    "title": "Создать закрытый GitHub и добавить участников",
+    "owner": "Оба",
+    "week": 10,
+    "estimate_hours": 1,
+    "priority": "Must",
+    "status": "Backlog"
+  },
+  {
+    "id": "W07",
+    "title": "Создать3D-сцену и освещение",
+    "owner": "Аяжан",
+    "week": 11,
+    "estimate_hours": 8,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W08",
+    "title": "Разработать авторские модели Миры и Яна",
+    "owner": "Аяжан",
+    "week": 11,
+    "estimate_hours": 8,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W09",
+    "title": "Реализовать движение, прыжок и коллизии",
+    "owner": "Аяжан",
+    "week": 11,
+    "estimate_hours": 7,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W10",
+    "title": "Добавить подбор свидетельств и пульты",
+    "owner": "Аяжан",
+    "week": 11,
+    "estimate_hours": 5,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W11",
+    "title": "Реализовать серверную игровую логику",
+    "owner": "Жайдар",
+    "week": 11,
+    "estimate_hours": 7,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W12",
+    "title": "Добавить SQLite и контрольные точки",
+    "owner": "Жайдар",
+    "week": 11,
+    "estimate_hours": 5,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W13",
+    "title": "Подключить Web Speech API",
+    "owner": "Жайдар",
+    "week": 12,
+    "estimate_hours": 5,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W14",
+    "title": "Подключить MediaPipe Gesture Recognizer",
+    "owner": "Жайдар",
+    "week": 12,
+    "estimate_hours": 7,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W15",
+    "title": "Реализовать пороги и защёлку жеста",
+    "owner": "Жайдар",
+    "week": 12,
+    "estimate_hours": 4,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W16",
+    "title": "Проверить AI на контрольных данных",
+    "owner": "Жайдар",
+    "week": 12,
+    "estimate_hours": 5,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W17",
+    "title": "Адаптировать испытания по истории ошибок",
+    "owner": "Жайдар",
+    "week": 12,
+    "estimate_hours": 3,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W18",
+    "title": "Собрать3 эпохи и причинные развилки",
+    "owner": "Аяжан",
+    "week": 13,
+    "estimate_hours": 7,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W19",
+    "title": "Добавить концовки, очки и достижение",
+    "owner": "Оба",
+    "week": 13,
+    "estimate_hours": 4,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W20",
+    "title": "Завершить меню, паузу, журнал и результаты",
+    "owner": "Аяжан",
+    "week": 13,
+    "estimate_hours": 5,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W21",
+    "title": "Добавить звук и настройки",
+    "owner": "Аяжан",
+    "week": 13,
+    "estimate_hours": 2,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W22",
+    "title": "Реализовать тестовый платёж и право доступа",
+    "owner": "Жайдар",
+    "week": 13,
+    "estimate_hours": 6,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W23",
+    "title": "Выполнить функциональные тесты",
+    "owner": "Оба",
+    "week": 14,
+    "estimate_hours": 5,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W24",
+    "title": "Исправить обнаруженные дефекты",
+    "owner": "Оба",
+    "week": 14,
+    "estimate_hours": 5,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W25",
+    "title": "Проверить полное 3D-прохождение в браузере",
+    "owner": "Оба",
+    "week": 14,
+    "estimate_hours": 4,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "W26",
+    "title": "Провести тестирование с 3 людьми вне команды",
+    "owner": "Аяжан",
+    "week": 14,
+    "estimate_hours": 4,
+    "priority": "Must",
+    "status": "Backlog"
+  },
+  {
+    "id": "W27",
+    "title": "Заполнить Plan vs Actual и отчёт",
+    "owner": "Оба",
+    "week": 14,
+    "estimate_hours": 2,
+    "priority": "Must",
+    "status": "Testing"
+  },
+  {
+    "id": "W28",
+    "title": "Подготовить презентацию и сценарий Live Demo",
+    "owner": "Оба",
+    "week": 15,
+    "estimate_hours": 3,
+    "priority": "Must",
+    "status": "In Progress"
+  },
+  {
+    "id": "W29",
+    "title": "Подтвердить личный вклад обоих в GitHub",
+    "owner": "Оба",
+    "week": 15,
+    "estimate_hours": 2,
+    "priority": "Must",
+    "status": "Backlog"
+  },
+  {
+    "id": "W30",
+    "title": "Выполнить живую защиту и выпустить учебный релиз",
+    "owner": "Оба",
+    "week": 15,
+    "estimate_hours": 3,
+    "priority": "Must",
+    "status": "Backlog"
+  },
+  {
+    "id": "CR03-1",
+    "title": "Перестроить станцию в большое здание с четырьмя крыльями",
+    "owner": "Аяжан",
+    "week": 13,
+    "estimate_hours": 8,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "CR03-2",
+    "title": "Добавить два вида камеры и свободный обзор мышью",
+    "owner": "Аяжан",
+    "week": 13,
+    "estimate_hours": 5,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "CR03-3",
+    "title": "Добавить электрическую головоломку и поиск документов",
+    "owner": "Оба",
+    "week": 13,
+    "estimate_hours": 6,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "CR03-4",
+    "title": "Сохранить состояния эпох и причинный ремонт клапана",
+    "owner": "Жайдар",
+    "week": 13,
+    "estimate_hours": 7,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "CR03-5",
+    "title": "Проверить путешествия и полное прохождение новой планировки",
+    "owner": "Оба",
+    "week": 14,
+    "estimate_hours": 4,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "CR04-1",
+    "title": "Переработать расследование и временные зависимости",
+    "owner": "Оба",
+    "week": 14,
+    "estimate_hours": 8,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "CR04-2",
+    "title": "Детализировать эпохи и футуристический корпус",
+    "owner": "Аяжан",
+    "week": 14,
+    "estimate_hours": 6,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "CR04-3",
+    "title": "Реализовать сейф и три связанных механических задачи",
+    "owner": "Жайдар",
+    "week": 14,
+    "estimate_hours": 6,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "CR04-4",
+    "title": "Добавить серверный таймер и паузу",
+    "owner": "Жайдар",
+    "week": 14,
+    "estimate_hours": 3,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "CR04-5",
+    "title": "Собрать 3D катсцену аварии",
+    "owner": "Аяжан",
+    "week": 14,
+    "estimate_hours": 4,
+    "priority": "Must",
+    "status": "Done"
+  },
+  {
+    "id": "CR04-6",
+    "title": "Проверить маршрут и исход по времени",
+    "owner": "Оба",
+    "week": 14,
+    "estimate_hours": 4,
+    "priority": "Must",
+    "status": "Done"
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "name": "station-17",
+  "version": "4.2.0",
+  "private": true,
+  "description": "Optional browser verification; Python server has no external dependencies",
+  "scripts": {
+    "test:browser": "node tests/browser_walkthrough.cjs",
+    "test:controls": "node tests/test_controls.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  },
+  "type": "module"
+}

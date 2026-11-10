@@ -1,0 +1,99 @@
+{
+  "run_at": "2026-10-29T11:13:58.667Z",
+  "checks": [
+    {
+      "name": "Present-day opening and father radio message",
+      "status": "Pass"
+    },
+    {
+      "name": "Same-place transfer to 2074",
+      "status": "Pass"
+    },
+    {
+      "name": "Found and read registry",
+      "status": "Pass"
+    },
+    {
+      "name": "Same-place transfer to 2026",
+      "status": "Pass"
+    },
+    {
+      "name": "Future registry opens present safe and reveals letter",
+      "status": "Pass"
+    },
+    {
+      "name": "Same-place transfer to 1978",
+      "status": "Pass"
+    },
+    {
+      "name": "Recovered blueprint solves circuit in past; journal return preserves puzzle",
+      "status": "Pass"
+    },
+    {
+      "name": "Same-place transfer to 2074",
+      "status": "Pass"
+    },
+    {
+      "name": "Found and read calibration",
+      "status": "Pass"
+    },
+    {
+      "name": "Same-place transfer to 1978",
+      "status": "Pass"
+    },
+    {
+      "name": "Future equations solve old three-flow valve",
+      "status": "Pass"
+    },
+    {
+      "name": "Same-place transfer to 2074",
+      "status": "Pass"
+    },
+    {
+      "name": "Found and read fatherlog",
+      "status": "Pass"
+    },
+    {
+      "name": "Past repair removes water and unlocks enclosed future museum log",
+      "status": "Pass"
+    },
+    {
+      "name": "Same-place transfer to 1978",
+      "status": "Pass"
+    },
+    {
+      "name": "Found and read carrier",
+      "status": "Pass"
+    },
+    {
+      "name": "Found and read delay",
+      "status": "Pass"
+    },
+    {
+      "name": "Same-place transfer to 2026",
+      "status": "Pass"
+    },
+    {
+      "name": "Same-place transfer to 2074",
+      "status": "Pass"
+    },
+    {
+      "name": "Three distinct references synchronize actual consoles across time",
+      "status": "Pass"
+    },
+    {
+      "name": "Same-place transfer to 2026",
+      "status": "Pass"
+    },
+    {
+      "name": "Complete narrative return ending, warning, commercial gate, 450 points",
+      "status": "Pass"
+    },
+    {
+      "name": "Reload preserves new investigation ending",
+      "status": "Pass"
+    }
+  ],
+  "pageErrors": [],
+  "note": "All navigation uses real keyboard movement and wall collisions. Only camera heading is fixed in the navigation helper."
+}

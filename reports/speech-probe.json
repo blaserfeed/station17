@@ -1,0 +1,33 @@
+{
+  "results": [
+    {
+      "result": [
+        {
+          "conf": 1,
+          "end": 1.56,
+          "start": 0.99,
+          "word": "вправо"
+        }
+      ],
+      "text": "вправо"
+    }
+  ],
+  "errors": [],
+  "input": "Synthetic Russian audio: Milena, вправо",
+  "samples": 60086,
+  "sampleRate": 16000,
+  "pipeline": {
+    "before": [
+      -2,
+      21
+    ],
+    "after": [
+      1.789,
+      24.789
+    ],
+    "status": "Услышано: вправо",
+    "trackEnded": true
+  },
+  "verifiedASR": true,
+  "verifiedMovement": true
+}

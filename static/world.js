@@ -3,9 +3,12 @@ import { StationCollision } from './collision.js';
 import { person, animatePerson, footShadow, placeFootShadow, JUMP, WALK_SPEED, RUN_SPEED } from './people.js';
 import { metal, casing, cylinder, pipe, generator, vessel, bench, chair, deskLamp,
   plant, valveBank, emergencyConsole, reel, rotorBlade, dressing, roof } from './industrial.js';
+import { attachAtmosphere } from './atmosphere.js';
+import { surfaceMaterial, environmentFor, skyTexture } from './materials.js';
+import { buildGrounds } from './landscape.js';
 
 const mat=(color,opts={})=>new THREE.MeshStandardMaterial({color,roughness:.85,...opts});
-function mesh(geo,material,parent,pos=[0,0,0],scale){const m=new THREE.Mesh(geo,material);m.position.set(...pos);if(scale)m.scale.set(...scale);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
+function mesh(geo,material,parent,pos=[0,0,0],scale){if(material?.normalMap&&geo.index&&!geo.getAttribute('tangent')){try{geo.computeTangents();}catch(e){material=material.clone();material.normalMap=null;}}const m=new THREE.Mesh(geo,material);m.position.set(...pos);if(scale)m.scale.set(...scale);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
 function box(p,size,pos,m){return mesh(new THREE.BoxGeometry(...size),m,p,pos);}
 function label(text,color='#20374a',width=384){const c=document.createElement('canvas');c.width=width;c.height=72;const ctx=c.getContext('2d');ctx.fillStyle='#fffdf5f0';ctx.fillRect(0,0,width,72);ctx.fillStyle=color;let fontSize=27;ctx.font='600 '+fontSize+'px system-ui';while(ctx.measureText(text).width>width-24&&fontSize>13){fontSize--;ctx.font='600 '+fontSize+'px system-ui';}ctx.textAlign='center';ctx.fillText(text,width/2,46);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:true}));s.scale.set(1.8,.34,1);return s;}
 function floorTexture(stage){const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');x.fillStyle=['#b8b3a1','#aab9b4','#edf5f4'][stage];x.fillRect(0,0,512,512);let seed=49;const rand=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};for(let i=0;i<6000;i++){const a=rand(),b=rand();x.fillStyle=`rgba(70,61,47,${rand()*.07})`;x.fillRect(a*512,b*512,stage===0?2+rand()*32:1,1);}x.strokeStyle=stage===0?'#b49b7d':'#a6b6b1';x.lineWidth=1.2;for(let i=0;i<=512;i+=64){x.beginPath();x.moveTo(0,i);x.lineTo(512,i);x.stroke();for(let j=0;j<512;j+=128){const at=j+(i%128?64:0);x.beginPath();x.moveTo(at,i);x.lineTo(at,i+64);x.stroke();}}const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(4,4);t.anisotropy=8;return t;}
@@ -15,12 +18,12 @@ function surface(parent,pos,size,title,lines=[],future=false,rotation=0){
 function detailsBatch(parent,entries){const inst=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),mat(0xffffff),entries.length),dummy=new THREE.Object3D();entries.forEach((e,i)=>{dummy.position.set(e[0],e[1],e[2]);dummy.scale.set(e[3],e[4],e[5]);dummy.rotation.set(0,e[7]||0,0);dummy.updateMatrix();inst.setMatrixAt(i,dummy.matrix);inst.setColorAt(i,new THREE.Color(e[6]));});inst.receiveShadow=true;inst.castShadow=false;parent.add(inst);return inst;}
 export class World{
  constructor(container,events){
-  this.events=events;this.container=container;  this.scene=new THREE.Scene();this.scene.background=new THREE.Color(0xc5e6f5);this.scene.fog=new THREE.Fog(0xd7e7ee,64,158);
+  this.events=events;this.container=container;  this.scene=new THREE.Scene();this.scene.background=null;this.scene.fog=new THREE.Fog(0xd7e7ee,64,240);this.sky=new THREE.Mesh(new THREE.SphereGeometry(420,24,16),new THREE.MeshBasicMaterial({map:skyTexture(0),side:THREE.BackSide,fog:false,depthWrite:false}));this.sky.frustumCulled=false;this.scene.add(this.sky);
   this.renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.05;container.appendChild(this.renderer.domElement);
-  this.camera=new THREE.PerspectiveCamera(63,1,.08,180);this.camera.position.set(17,15,21);this.camera.lookAt(0,0,0);
-  this.scene.add(new THREE.HemisphereLight(0xe7f4ff,0x9a927e,1.45));this.sun=new THREE.DirectionalLight(0xfff1d6,2.15);this.sun.position.set(-13,22,14);this.sun.castShadow=true;this.sun.shadow.mapSize.set(2048,2048);this.sun.shadow.radius=2.5;Object.assign(this.sun.shadow.camera,{left:-28,right:28,top:28,bottom:-28,far:78});this.sun.shadow.bias=-.00045;this.sun.shadow.normalBias=.04;this.scene.add(this.sun);const fill=new THREE.DirectionalLight(0xd7e8ff,.42);fill.position.set(18,12,-10);this.scene.add(fill);
+  this.camera=new THREE.PerspectiveCamera(63,1,.08,800);this.camera.position.set(17,15,21);this.camera.lookAt(0,0,0);
+  this.hemi=new THREE.HemisphereLight(0xe7f4ff,0x9a927e,1.35);this.scene.add(this.hemi);this.sun=new THREE.DirectionalLight(0xfff1d6,2.15);this.sun.position.set(-13,22,14);this.sun.castShadow=true;this.sun.shadow.mapSize.set(2048,2048);this.sun.shadow.radius=2.5;Object.assign(this.sun.shadow.camera,{left:-28,right:28,top:28,bottom:-28,far:78});this.sun.shadow.bias=-.00045;this.sun.shadow.normalBias=.04;this.scene.add(this.sun);this.fill=new THREE.DirectionalLight(0xd7e8ff,.42);this.fill.position.set(18,12,-10);this.scene.add(this.fill);this.atmosphere=attachAtmosphere(this.scene,this.renderer);
   this.level=new THREE.Group();this.scene.add(this.level);this.player=person('anna');this.scene.add(this.player);this.player.position.set(-2,0,21);this.npc=person('sergey');this.scene.add(this.npc);this.npc.position.set(0,0,17);this.npc.rotation.y=-.48;
-  this.playerShadow=footShadow();this.npcShadow=footShadow();this.scene.add(this.playerShadow,this.npcShadow);
+  this.playerShadow=footShadow();this.npcShadow=footShadow();this.scene.add(this.playerShadow,this.npcShadow);this.graphics=1;
   this.clock=new THREE.Clock();this.input={x:0,z:0};this.active=false;this.inGame=false;this.elapsed=0;this.hurtUntil=0;this.hitCooldown=0;this.pendingPick=new Set();this.lastCollect=0;this.mode=localStorage.getItem('station17-view')==='first'?'first':'third';this.yaw=Math.PI/4;this.pitch=.12;this.distance=3.55;this.cameraReady=false;this.drag=false;this.loadDemo();
   this.targetYaw=this.yaw;this.targetPitch=this.pitch;this.collision=new StationCollision([],[-36,36,-27,27],.43);this.velocity=new THREE.Vector2();this.travelled=0;this.jumpAge=null;this.fallbackLook=false;this.wantsLook=false;this.capturePending=false;
   const canvas=this.renderer.domElement;
@@ -66,14 +69,13 @@ export class World{
   if(this.caseReel)this.caseReel.visible=!g.inventory.includes('fatherlog');
  }
  build(g){
-  const oldMaterials=new Set(),oldTextures=new Set();for(const c of [...this.level.children]){this.level.remove(c);c.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.geometry?.dispose();for(const m of Array.isArray(o.material)?o.material:o.material?[o.material]:[]){oldMaterials.add(m);if(m.map)oldTextures.add(m.map);}});}oldMaterials.forEach(m=>m.dispose());oldTextures.forEach(t=>t.dispose());
+  const oldMaterials=new Set(),oldTextures=new Set(),mapKeys=['map','normalMap','roughnessMap','bumpMap','metalnessMap','emissiveMap','alphaMap'];for(const c of [...this.level.children]){this.level.remove(c);c.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.geometry?.dispose();for(const m of Array.isArray(o.material)?o.material:o.material?[o.material]:[]){oldMaterials.add(m);for(const key of mapKeys){const tex=m[key];if(tex&&!tex.userData.keep)oldTextures.add(tex);}}});}oldMaterials.forEach(m=>m.dispose());oldTextures.forEach(t=>t.dispose());
   this.game=g;this.repairsKey=JSON.stringify(g.repairs);this.machineRotors=[];this.machineLights=[];this.pickups=new Map();this.terminals=new Map();this.hazards=[];
-  const stage=g.stage,plaster=mat([0xe7debf,0xdbe3d5,0xe9f2f0][stage]),base=mat([0x7e9985,0x608c86,0x83b5ba][stage]),wood=mat([0x937251,0x9c8d70,0xd5dfdc][stage]),steel=mat(0x677f7f,{metalness:.35}),paper=mat(0xf8efd2),orange=mat(0xdb9646);
-  this.scene.background.setHex([0xc6e5f0,0xc5e5f3,0xc9e9ed][stage]);this.scene.fog.near=78;this.scene.fog.far=188;this.scene.fog.color.copy(this.scene.background);this.sun.intensity=2.45;this.sun.position.set(-28,38,16);this.sun.color.setHex([0xffebc5,0xfff1dd,0xe4f3ec][stage]);Object.assign(this.sun.shadow.camera,{left:-48,right:48,top:42,bottom:-42,far:120});this.sun.shadow.camera.updateProjectionMatrix();
-  box(this.level,[240,.25,220],[0,-.8,0],mat(0x94b27e));box(this.level,[150,.08,40],[0,-.55,-58],mat(0x71b6c2,{roughness:.2,metalness:.15}));
-  for(let i=0;i<14;i++){const x=(i-7)*12,z=-85-(i%3)*6,h=14+(i*7%19);mesh(new THREE.ConeGeometry(19,h,7),mat(i%2?0xa5b9ba:0x94afb0),this.level,[x,h/2-1,z]).castShadow=false;}
-  for(let i=0;i<18;i++){const x=-70+(i%9)*17,z=i<9?40:-38;if(Math.abs(x)<42)continue;mesh(new THREE.CylinderGeometry(.22,.35,3,7),mat(0x8d7960),this.level,[x,.8,z]);mesh(new THREE.SphereGeometry(2.5,10,8),mat(i%2?0x7b9c66:0x92b173),this.level,[x,4,z],[1,1.3,1]);}
-  box(this.level,[74,.5,56],[0,-.3,0],mat(0xa9ad9e));const tex=floorTexture(stage);tex.repeat.set(7,5);box(this.level,[72,.08,54],[0,-.02,0],mat(0xffffff,{map:tex,bumpMap:tex,bumpScale:.021,roughness:.93}));
+  const stage=g.stage,q=this.graphics??1,plaster=surfaceMaterial('plaster',stage,[5,3],q),base=surfaceMaterial('plaster',stage,[2,1],q),wood=surfaceMaterial('wood',stage,[2,2],q),steel=surfaceMaterial('steel',stage,[3,3],q),paper=mat(0xf8efd2),orange=mat(0xdb9646);
+  base.color.setHex([0x6d8870,0x4e6c68,0x6a8d90][stage]);
+  this.sun.position.set(-28,38,16);Object.assign(this.sun.shadow.camera,{left:-48,right:48,top:42,bottom:-42,far:120});this.sun.shadow.camera.updateProjectionMatrix();this.atmosphere.apply(this,stage);this.scene.environment=q===0?null:environmentFor(stage);
+  this.waterMat=buildGrounds(this.level,stage,q);
+  box(this.level,[74,.5,56],[0,-.3,0],surfaceMaterial('floor',stage,[4,3],q));box(this.level,[72,.08,54],[0,-.02,0],surfaceMaterial('floor',stage,[9,7],q));
   // Real room openings connect four wings to a tall turbine hall.
   const wallBox=(sz,pos,m)=>box(this.level,sz,pos,m);
   for(const z of [-27.2,27.2]){wallBox([73,2.1,.45],[0,1,z],plaster);wallBox([73,1.25,.45],[0,5.9,z],plaster);box(this.level,[73,.12,.5],[0,2.12,z],base);for(let x=-36;x<=36;x+=8){wallBox([.55,4.2,.55],[x,3.6,z],plaster);box(this.level,[7.5,.08,.16],[x+4,3.6,z],steel);box(this.level,[.09,3.2,.16],[x+4,3.75,z],steel);}}
@@ -111,6 +113,7 @@ export class World{
   sign('СТАНЦИЯ 17 · '+[1978,2026,2074][stage],[0,4.8,-26.5],7);wallSign('АРХИВ',[-11.6,3.5,-14],Math.PI/2,3);wallSign('МАСТЕРСКАЯ',[-11.6,3.5,10],Math.PI/2,3.5);wallSign('ТУРБИННЫЙ ЗАЛ',[11.6,3.5,-14],-Math.PI/2,4);wallSign('ДИСПЕТЧЕРСКАЯ',[11.6,3.5,10],-Math.PI/2,4);
   // Painted paths and practical props give the large building a readable layout.
   for(const x of [-8,8])box(this.level,[.08,.012,49],[x,.035,0],orange);
+  if(stage===1){for(const [x,z,w,d] of [[-3,-10,3.4,1.6],[9,7,2.4,2.2],[22,-16,3.6,1.3]]){const stain=box(this.level,[w,.012,d],[x,.03,z],mat(0x355864,{transparent:true,opacity:.42,roughness:.25,polygonOffset:true,polygonOffsetFactor:-2}));stain.castShadow=false;}}
   for(const [x,z] of turbines){
    if(future)cylinder(this.level,2.45,.6,[x,.3,z],metal(0xb0c7c9),2.54,48);
    if(stage===2){
@@ -158,7 +161,7 @@ export class World{
    for(const z of [-23,-7,9,23]){box(this.level,[20,.05,.05],[0,7.8,z],mat(0xe4f7ed,{emissive:0xa3dace,emissiveIntensity:.55}));}
   }
   detailsBatch(this.level,details);
-  dressing(this.level, stage);
+  dressing(this.level, stage);this.lamps=[];this.level.traverse(o=>{if(o.isPointLight)this.lamps.push({light:o,base:o.intensity});});
   this.caseReel=null;
   for(const c of g.epoch.clues){
    if(c.requires==='valve'&&!g.repairs.valve)continue;
@@ -197,11 +200,14 @@ export class World{
   const sceneState={...g,stage:1,epoch:{year:2026,name:'Авария на станции',clues:[],terminals:[],hazards:[]}};this.build(sceneState);this.releaseLook();this.setActive(false);this.inGame=true;this.player.visible=false;this.npc.visible=false;this.oldMovieFov=this.camera.fov;this.camera.fov=58;this.camera.updateProjectionMatrix();this.sun.intensity=.65;
   const water=box(this.level,[72,.18,54],[0,-.2,0],mat(0x377f96,{transparent:true,opacity:.87,roughness:.17,metalness:.2,depthWrite:false}));water.name='accident-water';water.castShadow=false;
   const alarm=new THREE.PointLight(0xef674a,100,65,1.5);alarm.position.set(3,4,8);this.level.add(alarm);
-  const drops=[];for(let i=0;i<36;i++){const o=mesh(new THREE.SphereGeometry(.075,6,5),mat(0x75bad1,{transparent:true,opacity:.7,depthWrite:false}),this.level);o.castShadow=false;o.userData.spray=i%2?[-3,2,-12]:[3,1.8,1];drops.push(o);}
+  const drops=[];for(let i=0;i<64;i++){const o=mesh(new THREE.SphereGeometry(.06,6,5),mat(0x75bad1,{transparent:true,opacity:.7,depthWrite:false}),this.level);o.castShadow=false;o.userData.spray=i%2?[-3,2,-12]:[3,1.8,1];drops.push(o);}
   this.floodCinematic={started:performance.now(),water,alarm,drops,motion};this.camera.position.set(-24,2.7,12);this.camera.lookAt(-29,1.2,7);
  }
- floodStep(dt){const c=this.floodCinematic,t=(performance.now()-c.started)/1000;c.water.position.y=-.12+Math.min(1,t/7.5)*1.9;c.alarm.intensity=c.motion?65+Math.sin(t*2.2)*25:60;for(let i=0;i<c.drops.length;i++){const drop=c.drops[i],phase=(t*1.2+i/36)%1,[x,y,z]=drop.userData.spray;drop.position.set(x+Math.sin(i*2.3)*phase*2.7,y+.8*phase-2.8*phase*phase,z+Math.cos(i*2.3)*phase*2.7);drop.scale.setScalar(.5+phase*.7);}const shot=!c.motion?1:t<2.5?0:t<6?1:2;const poses=[[-24,2.7,12],[12,6,17],[0,5.7,25]],looks=[[-29,1.2,7],[0,1.3,-2],[0,.9,2]];this.camera.position.lerp(new THREE.Vector3(...poses[shot]),1-Math.exp(-dt*2));this.camera.lookAt(...looks[shot]);this.player.visible=false;this.npc.visible=false;}
+ floodStep(dt){const c=this.floodCinematic,t=(performance.now()-c.started)/1000;c.water.position.y=-.12+Math.min(1,t/7.5)*1.9;c.alarm.intensity=c.motion?65+Math.sin(t*2.2)*25:60;for(let i=0;i<c.drops.length;i++){const drop=c.drops[i],phase=(t*1.2+i/36)%1,[x,y,z]=drop.userData.spray;drop.position.set(x+Math.sin(i*2.3)*phase*2.7,y+.8*phase-2.8*phase*phase,z+Math.cos(i*2.3)*phase*2.7);drop.scale.setScalar(.5+phase*.7);}const shot=!c.motion?1:t<2.5?0:t<6?1:2;const poses=[[-24,2.7,12],[12,6,17],[0,5.7,25]],looks=[[-29,1.2,7],[0,1.3,-2],[0,.9,2]];this.camera.position.lerp(new THREE.Vector3(...poses[shot]),1-Math.exp(-dt*2));if(c.motion){this.camera.position.x+=Math.sin(t*17)*.05;this.camera.position.y+=Math.sin(t*23)*.035;}this.camera.lookAt(...looks[shot]);c.water.material.opacity=.78+Math.sin(t*3)*.08;this.player.visible=false;this.npc.visible=false;}
  endFlood(){if(!this.floodCinematic)return;this.floodCinematic.alarm.intensity=0;this.floodCinematic.drops.forEach(o=>o.visible=false);this.floodCinematic=null;this.camera.fov=this.oldMovieFov||63;this.camera.updateProjectionMatrix();this.npc.visible=true;this.cameraReady=false;}
+ setMotion(v){this.motion=v;this.atmosphere?.setReduced(!v);}
+ setGraphics(level){const next=level===0||level===2?level:1;if(this.graphics===next)return;this.graphics=next;const ratio=next===2?Math.min(devicePixelRatio,1.75):next===1?Math.min(devicePixelRatio,1.35):1;this.renderer.setPixelRatio(ratio);const shadow=next===2?2048:next===1?1024:512;this.sun.shadow.mapSize.set(shadow,shadow);if(this.sun.shadow.map){this.sun.shadow.map.dispose();this.sun.shadow.map=null;}this.scene.environment=next===0?null:environmentFor(this.game?.stage||0);this.atmosphere?.setQuality(next);if(this.game)this.build(this.game);this.resize();}
+ setMemory(v){this.atmosphere?.setMemory(v);if(!v&&this.game)this.atmosphere?.apply(this,this.game.stage);}
  pulseValve(){if(this.reserveWheel)this.reserveWheel.rotation.z=0;}
  jump(){if(this.active&&this.jumpAge===null)this.jumpAge=0;}
  position(){return [Number(this.player.position.x.toFixed(3)),Number(this.player.position.z.toFixed(3))];}
@@ -224,7 +230,7 @@ export class World{
   const p=this.player.position;if(!this.inGame){this.player.visible=true;const target=new THREE.Vector3(31,29,48);this.camera.position.lerp(target,.06);this.camera.lookAt(0,1,0);this.cameraReady=false;return;}
   if(!this.active&&this.cameraReady)return;
   const eye=new THREE.Vector3(p.x,p.y+1.58,p.z),forward=new THREE.Vector3(Math.sin(this.yaw)*Math.cos(this.pitch),-Math.sin(this.pitch),-Math.cos(this.yaw)*Math.cos(this.pitch));
-  if(this.mode==='first'){this.camera.position.copy(eye);this.camera.lookAt(eye.clone().add(forward));this.player.visible=false;}
+  if(this.mode==='first'){const pace=this.sprinting?11:7.2,amp=this.motion===false?0:this.sprinting?.04:.022;if(this.travelled>.001)eye.y+=Math.sin(this.elapsed*pace)*amp;else if(this.motion!==false)eye.y+=Math.sin(this.elapsed*1.5)*.008;if(this.jumpAge!==null)eye.y+=Math.sin(Math.min(1,this.jumpAge)*Math.PI)*.06;this.camera.position.copy(eye);this.camera.lookAt(eye.clone().add(forward));this.player.visible=false;}
   else{
    const focus=new THREE.Vector3(p.x,p.y+1.28,p.z);
    const desired=focus.clone().addScaledVector(forward,-this.distance);
@@ -237,7 +243,8 @@ export class World{
    const limit=this.collision.cameraLimit(focus,direction,distance);
    if(!this.cameraReady||limit<this.cameraDistance)this.cameraDistance=limit;
    else this.cameraDistance=THREE.MathUtils.damp(this.cameraDistance,limit,9,dt);
-   this.camera.position.copy(focus).addScaledVector(direction,Math.max(.11,this.cameraDistance));
+   const next=focus.clone().addScaledVector(direction,Math.max(.11,this.cameraDistance));
+   if(!this.cameraReady)this.camera.position.copy(next);else this.camera.position.lerp(next,1-Math.exp(-dt*8));
    this.camera.lookAt(focus);
    this.player.visible=this.cameraDistance>.65;
   }
@@ -257,7 +264,7 @@ export class World{
    const view=this.lookInput||{x:0,y:0};this.targetYaw+=view.x*1.0*dt;this.targetPitch=THREE.MathUtils.clamp(this.targetPitch+view.y*.7*dt,-.65,1.05);
    const lookMix=1-Math.exp(-dt*28);this.yaw+=(this.targetYaw-this.yaw)*lookMix;this.pitch+=(this.targetPitch-this.pitch)*lookMix;
    let {x,z}=this.input;const length=Math.hypot(x,z);if(length>1){x/=length;z/=length;}const co=Math.cos(this.yaw),si=Math.sin(this.yaw),dx=x*co-z*si,dz=x*si+z*co;
-   const speed=this.sprinting?RUN_SPEED:WALK_SPEED;const blend=1-Math.exp(-dt*(length>.01?8:12));this.velocity.lerp(new THREE.Vector2(dx*speed,dz*speed),blend);if(length<.01&&this.velocity.length()<.02)this.velocity.set(0,0);
+   const speed=this.sprinting?RUN_SPEED:WALK_SPEED;const blend=1-Math.exp(-dt*(length>.01?11:14));this.velocity.lerp(new THREE.Vector2(dx*speed,dz*speed),blend);if(length<.01&&this.velocity.length()<.02)this.velocity.set(0,0);
    const p=this.player.position,oldX=p.x,oldZ=p.z;
    this.collision.move(p,this.velocity.x*dt,this.velocity.y*dt);
    if(this.jumpAge!==null){
@@ -269,13 +276,21 @@ export class World{
    const actualSpeed=Math.hypot(p.x-oldX,p.z-oldZ)/Math.max(dt,.001),moving=actualSpeed>.06;
    if(moving){const facing=Math.atan2(p.x-oldX,p.z-oldZ),turn=Math.atan2(Math.sin(facing-this.player.rotation.y),Math.cos(facing-this.player.rotation.y));this.player.rotation.y+=turn*(1-Math.exp(-dt*8));}
    this.travelled=Math.hypot(p.x-oldX,p.z-oldZ);
+   this.stepClock=(this.stepClock||0)+this.travelled;
+   const stride=this.sprinting?1.05:.66;
+   if(this.jumpAge===null&&this.stepClock>stride){this.stepClock=0;this.events.footstep?.();}
+   if(this.wasAir&&this.jumpAge===null)this.events.land?.();
+   this.wasAir=this.jumpAge!==null;
   }
   if(this.game.repairs?.valve&&this.reserveWheel)this.reserveWheel.rotation.z=THREE.MathUtils.damp(this.reserveWheel.rotation.z,Math.PI/4,5,dt);
   animatePerson(this.player,dt,this.active?this.travelled:0,this.jumpAge);
   animatePerson(this.npc,dt);
-  if(this.active&&this.npc.visible){const dx=this.player.position.x-this.npc.position.x,dz=this.player.position.z-this.npc.position.z;if(Math.hypot(dx,dz)<7){const face=Math.atan2(dx,dz),turn=Math.atan2(Math.sin(face-this.npc.rotation.y),Math.cos(face-this.npc.rotation.y));this.npc.rotation.y+=turn*(1-Math.exp(-dt*2.4));}}
+  if(this.active&&this.npc.visible){const dx=this.player.position.x-this.npc.position.x,dz=this.player.position.z-this.npc.position.z;if(Math.hypot(dx,dz)<7){const face=Math.atan2(dx,dz),turn=Math.atan2(Math.sin(face-this.npc.rotation.y),Math.cos(face-this.npc.rotation.y));this.npc.rotation.y+=turn*(1-Math.exp(-dt*3.2));}}
   for(const obj of this.pickups.values()){if(obj.userData.clueLabel)obj.userData.clueLabel.visible=Math.hypot(this.player.position.x-obj.position.x,this.player.position.z-obj.position.z)<9;}
   for(const rotor of this.machineRotors||[])rotor.rotation.y=t*(this.game.stage===2?.25:.045);for(const glow of this.machineLights||[])glow.material.emissiveIntensity=.55+Math.sin(t*.7)*.05;
+  if(!this.floodCinematic&&this.motion!==false){for(let i=0;i<(this.lamps||[]).length;i++){const lamp=this.lamps[i];const blink=this.game?.stage===1&&Math.sin(t*2.1+i)>.9?.35:1;lamp.light.intensity=lamp.base*(.86+.14*Math.sin(t*(2+i*.3)+i))*blink;}}
+  if(this.waterMat){const slide=this.waterMat.normalMap||this.waterMat.bumpMap;if(slide){slide.offset.x=t*.015;slide.offset.y=Math.sin(t*.2)*.01;}}
+  this.atmosphere?.update(this,dt,t);
   this.cameraStep(dt);placeFootShadow(this.playerShadow,this.player);placeFootShadow(this.npcShadow,this.npc);this.drawMap();this.renderer.render(this.scene,this.camera);
  }
 }

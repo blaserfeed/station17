@@ -28,3 +28,29 @@
 }
 .pipe-option.selected { background: #f6efe0; border-color: #a96835; }
 .pipe-option.selected path { stroke: #a7612e; }
+
+body.era-1978 { --bg: #efe2c4; --mint: #8a5a28; }
+body.era-2026 { --bg: #d5e0e6; --mint: #3d6270; }
+body.era-2074 { --bg: #d4f1ec; --mint: #1f7f86; }
+body.playing.tense #veil { opacity: 1; background: radial-gradient(ellipse at center, transparent 52%, rgba(92, 24, 18, .34) 100%); }
+body.shifting #world canvas { filter: blur(7px) saturate(1.15); }
+body.reduced #world canvas, body.reduced.shifting #world canvas { filter: none; }
+#time-transfer.long .transfer-progress:after { animation-duration: 2s; }
+#toast.show { animation: toastIn .28s ease; }
+@keyframes toastIn { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translateX(-50%); } }
+body.reduced #toast.show { animation: none; }
+#finale-scene, #epilogue { position: fixed; inset: 0; z-index: 48; display: flex; align-items: center; justify-content: center; }
+#finale-scene { background: rgba(8, 20, 28, .62); color: #f6f1e4; }
+body.finale #screen { visibility: hidden; }
+.finale-card { max-width: 18em; text-align: center; padding: 0 24px; }
+.finale-card span { display: block; letter-spacing: .18em; font-size: 12px; text-transform: uppercase; color: #d7c39a; margin-bottom: 16px; }
+.finale-card p { font-size: clamp(22px, 3vw, 38px); line-height: 1.35; text-shadow: 0 2px 16px #061018; }
+#skip-finale { position: absolute; right: 25px; top: 25px; min-height: 35px; padding: 6px 12px; font-size: 12px; }
+#epilogue { background: #071014ee; color: #9dffe8; }
+.monitor { display: grid; gap: 14px; justify-items: center; font-family: ui-monospace, monospace; letter-spacing: .16em; text-align: center; }
+.monitor b { font-size: clamp(18px, 3vw, 32px); font-weight: 650; }
+.monitor small { letter-spacing: .08em; color: #6f9f96; font-size: 13px; }
+body.finale header, body.finale footer, body.finale #veil, body.finale #hud, body.finale #map-panel { display: none; }
+
+select{font:inherit;background:#fffef6;color:#233c48;border:1px solid #c8d3cd;border-radius:5px;padding:8px 12px;min-height:44px;width:100%}
+

@@ -4,8 +4,8 @@ import { GLTFLoader } from './vendor/GLTFLoader.js';
 const loader = new GLTFLoader();
 const groundedBlend = 14;
 export const JUMP = {takeoff: .15, land: .66, end: .90};
-export const WALK_SPEED = 1.35;
-export const RUN_SPEED = 4.2;
+export const WALK_SPEED = 2.15;
+export const RUN_SPEED = 4.6;
 
 function jumpClipTime(t) {
   // Calibrate the captured crouch, flight and recovery to the physics step.
@@ -198,8 +198,8 @@ function naturalArms(scene, upperSwing, foreSwing, influence, rest) {
     toWorld(_sceneQ, tx, ty, tz, twist);
     aimLimb(bone, dir, twist, influence);
   };
-  pose(scene.getObjectByName('upperarm_l'), 0.16, -1, upperSwing * 0.72, 0, 0.2, 1);
-  pose(scene.getObjectByName('upperarm_r'), -0.16, -1, -upperSwing * 0.72, 0, 0.2, 1);
+  pose(scene.getObjectByName('upperarm_l'), 0.16, -1, upperSwing * 0.84, 0, 0.2, 1);
+  pose(scene.getObjectByName('upperarm_r'), -0.16, -1, -upperSwing * 0.84, 0, 0.2, 1);
   pose(scene.getObjectByName('lowerarm_l'), 0.05, -1, foreSwing * 0.2, 0, 0.15, 1);
   pose(scene.getObjectByName('lowerarm_r'), -0.05, -1, -foreSwing * 0.2, 0, 0.15, 1);
   pose(scene.getObjectByName('hand_l'), 0.02, -1, foreSwing * 0.12, -1, 0.05, 0.15);
@@ -265,6 +265,25 @@ function aimFromStand(bone, captured, standDir, wantWorld, sceneQ, influence) {
   bone.updateMatrixWorld(true);
 }
 
+function stance(spec) {
+  // Anna's shoes reach farther inward, so her ankles stay a little wider and her toes turn in less.
+  return Math.abs(spec.footX) > 0.19 ? {x: 0.062, yaw: 0.14} : {x: 0.1, yaw: 0.1};
+}
+
+// Swing the toe sideways around the model's up axis. Left and right use opposite signs.
+function yawToes(foot, side, sceneQ, influence, amount) {
+  if (!foot || !foot.parent || influence < 0.02) return;
+  const yaw = (side === 'l' ? -1 : 1) * amount;
+  _axis.set(0, 0, 1).applyQuaternion(sceneQ);
+  _delta.setFromAxisAngle(_axis, yaw);
+  foot.getWorldQuaternion(_standWorld);
+  _newWorld.copy(_delta).multiply(_standWorld);
+  foot.parent.getWorldQuaternion(_parentQ);
+  _aimed.copy(_parentQ.invert()).multiply(_newWorld);
+  foot.quaternion.slerp(_aimed, influence);
+  foot.updateMatrixWorld(true);
+}
+
 function pitchFoot(bone, captured, pitch, sceneQ, influence) {
   if (!bone || !captured || influence < 0.02) return;
   _axis.set(1, 0, 0).applyQuaternion(sceneQ);
@@ -284,9 +303,10 @@ function placeLeg(scene, side, step, influence, stand, sceneQ) {
   const foot = scene.getObjectByName(`foot_${side}`);
   if (!spec || !thigh || !calf || !foot) return;
   thigh.getWorldPosition(_hip);
-  _ankle.set(spec.footX, spec.footY + step.y, step.z);
+  const place = stance(spec);
+  _ankle.set((side === 'l' ? 1 : -1) * place.x, spec.footY + step.y, step.z);
   scene.localToWorld(_ankle);
-  _pole.set(side === 'l' ? 0.25 : -0.25, 0.2, 1).applyQuaternion(sceneQ).add(_hip);
+  _pole.set(side === 'l' ? 0.08 : -0.08, 0.15, 1).applyQuaternion(sceneQ).add(_hip);
   solveKnee(_hip, _ankle, spec.upper, spec.lower, _pole, _knee);
   aimFromStand(thigh, stand.bones[`thigh_${side}`], spec.thighDir, _want.subVectors(_knee, _hip), sceneQ, influence);
   calf.getWorldPosition(_knee);
@@ -298,22 +318,37 @@ function placeLeg(scene, side, step, influence, stand, sceneQ) {
     foot.updateMatrixWorld(true);
   }
   pitchFoot(foot, stand.bones[`foot_${side}`], step.pitch, sceneQ, influence);
+  yawToes(foot, side, sceneQ, influence, place.yaw);
+}
+
+function closedStance(scene, stand) {
+  if (!stand) return;
+  scene.updateWorldMatrix(true, true);
+  scene.getWorldQuaternion(_sceneQ);
+  placeLeg(scene, 'l', {z: 0, y: 0, pitch: 0.08}, 1, stand, _sceneQ);
+  placeLeg(scene, 'r', {z: 0, y: 0, pitch: 0.08}, 1, stand, _sceneQ);
 }
 
 // The captured walk is a crouch with locked ankles. Build a heel-toe gait from the standing pose.
+function scaledStep(step, posed) {
+  return {z: step.z * posed, y: step.y * posed, pitch: step.pitch * posed + 0.08 * (1 - posed)};
+}
+
 function humanGait(scene, cycle, influence, stand, travel, lift) {
-  if (!stand || influence < 0.02) return;
+  if (!stand) return;
   const pelvis = scene.getObjectByName('pelvis');
-  if (pelvis && stand.pelvis) {
+  if (influence >= 0.02 && pelvis && stand.pelvis) {
     const bob = 0.016 * Math.abs(Math.sin(cycle * Math.PI * 2));
     const sway = Math.sin(cycle * Math.PI * 2) * 0.02;
     pelvis.position.z = THREE.MathUtils.lerp(pelvis.position.z, stand.pelvis.z - bob, influence);
     pelvis.position.x = THREE.MathUtils.lerp(pelvis.position.x, stand.pelvis.x + sway, influence);
   }
-  for (const name of ['spine_01', 'spine_02', 'neck_01', 'head']) {
-    const bone = scene.getObjectByName(name);
-    const captured = stand.bones[name];
-    if (bone && captured) bone.quaternion.slerp(captured.local, influence * 0.9);
+  if (influence >= 0.02) {
+    for (const name of ['spine_01', 'spine_02', 'neck_01', 'head']) {
+      const bone = scene.getObjectByName(name);
+      const captured = stand.bones[name];
+      if (bone && captured) bone.quaternion.slerp(captured.local, influence * 0.9);
+    }
   }
   scene.updateWorldMatrix(true, true);
   const stanceTravel = travel * STANCE;
@@ -324,23 +359,24 @@ function humanGait(scene, cycle, influence, stand, travel, lift) {
     if (!spec || !thigh) continue;
     const step = footStep(t, stanceTravel, lift);
     thigh.getWorldPosition(_hip);
-    _ankle.set(spec.footX, spec.footY + step.y, step.z);
+    _ankle.set((side === 'l' ? 1 : -1) * stance(spec).x, spec.footY + step.y, step.z);
     scene.localToWorld(_ankle);
     const horiz = Math.hypot(_ankle.x - _hip.x, _ankle.z - _hip.z);
     const reach = (spec.upper + spec.lower) * 0.98;
     const vertical = Math.sqrt(Math.max(0, reach * reach - horiz * horiz));
     drop = Math.max(drop, _hip.y - (_ankle.y + vertical));
   }
-  drop = Math.min(drop, 0.06);
-  if (pelvis && drop > 0) {
+  drop = Math.min(drop, 0.06) * Math.min(1, influence * 2.2);
+  if (pelvis && drop > 0.001) {
     pelvis.parent.getWorldScale(_span);
     pelvis.position.z -= drop / (_span.x || 1);
     pelvis.updateMatrixWorld(true);
   }
   scene.updateWorldMatrix(true, true);
   scene.getWorldQuaternion(_sceneQ);
-  placeLeg(scene, 'l', footStep(cycle, stanceTravel, lift), influence, stand, _sceneQ);
-  placeLeg(scene, 'r', footStep(cycle + 0.5, stanceTravel, lift), influence, stand, _sceneQ);
+  const posed = Math.min(1, influence * 2.2);
+  placeLeg(scene, 'l', scaledStep(footStep(cycle, stanceTravel, lift), posed), 1, stand, _sceneQ);
+  placeLeg(scene, 'r', scaledStep(footStep(cycle + 0.5, stanceTravel, lift), posed), 1, stand, _sceneQ);
 }
 
 function captureStand(scene) {
@@ -454,6 +490,105 @@ export function makeJumpClip(scene) {
   return new THREE.AnimationClip('Jump', duration, tracks);
 }
 
+function groomSkin(texture, soften) {
+  if (!texture || texture.userData.groomed || !texture.image) return;
+  const img = texture.image;
+  const w = img.width, h = img.height;
+  if (!w || !h) return;
+  texture.userData.groomed = true;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d', {willReadFrequently: true});
+  ctx.drawImage(img, 0, 0);
+  const src = ctx.getImageData(0, 0, w, h);
+  const blur = document.createElement('canvas');
+  blur.width = w;
+  blur.height = h;
+  const bctx = blur.getContext('2d');
+  bctx.filter = 'blur(2.5px)';
+  bctx.drawImage(img, 0, 0);
+  const soft = bctx.getImageData(0, 0, w, h);
+  const d = src.data, s = soft.data;
+  const bg = [d[0], d[1], d[2]];
+  const face = (i, x) => x > w * 0.58 && Math.abs(d[i] - bg[0]) + Math.abs(d[i + 1] - bg[1]) + Math.abs(d[i + 2] - bg[2]) > 26;
+  let minX = w, minY = h, maxX = 0, maxY = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = Math.floor(w * 0.58); x < w; x++) {
+      const i = (y * w + x) * 4;
+      if (!face(i, x)) continue;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+  const fw = Math.max(1, maxX - minX), fh = Math.max(1, maxY - minY);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      if (Math.abs(d[i] - bg[0]) + Math.abs(d[i + 1] - bg[1]) + Math.abs(d[i + 2] - bg[2]) < 16) continue;
+      const lum = (d[i] + d[i + 1] + d[i + 2]) / 3;
+      const hair = lum < 145 && d[i] > d[i + 2] + 12;
+      if (hair) continue;
+      let r = d[i] * 1.03 + 4, g = d[i + 1] * 1.01 + 1, b = d[i + 2] * 0.99;
+      if (face(i, x) && maxX > minX && lum > 120) {
+        const u = (x - minX) / fw, v = (y - minY) / fh;
+        const edge = u < 0.08 || u > 0.92 || v < 0.08 || v > 0.92;
+        const mix = edge ? 0 : soften * 0.55;
+        r = r * (1 - mix) + s[i] * mix;
+        g = g * (1 - mix) + s[i + 1] * mix;
+        b = b * (1 - mix) + s[i + 2] * mix;
+        const redness = d[i] - (d[i + 1] + d[i + 2]) * 0.5;
+        if (v > 0.4 && v < 0.75 && redness > 8 && redness < 48) { r += 12; g += 2; }
+      }
+      d[i] = Math.max(0, Math.min(255, r));
+      d[i + 1] = Math.max(0, Math.min(255, g));
+      d[i + 2] = Math.max(0, Math.min(255, b));
+    }
+  }
+  ctx.putImageData(src, 0, 0);
+  texture.image = canvas;
+  texture.needsUpdate = true;
+}
+
+function polishLook(scene, name) {
+  const soften = name === 'sergey' ? 0.22 : 0.4;
+  scene.traverse(part => {
+    if (!part.isMesh) return;
+    const list = Array.isArray(part.material) ? part.material : [part.material];
+    for (const m of list) {
+      if (!m) continue;
+      const label = `${m.name || ''} ${part.name || ''}`;
+      if (/anatomical body\.body/i.test(label)) {
+        groomSkin(m.map, soften);
+        m.color.setHex(0xfff1e8);
+        m.roughness = 0.48;
+        m.envMapIntensity = 0.22;
+      } else if (/teeth/i.test(label)) {
+        m.color.setHex(0xfff7f1);
+        m.roughness = 0.32;
+      } else if (/ponytail|hair/i.test(label)) {
+        m.roughness = 0.52;
+      } else if (/shirt|cotton/i.test(label)) {
+        m.color.setHex(0x2c6c76);
+        m.roughness = 0.66;
+      } else if (/trouser/i.test(label)) {
+        m.color.setHex(0x2a3138);
+        m.roughness = 0.7;
+      } else if (/original top/i.test(label)) {
+        m.color.setHex(0x2e4252);
+        m.roughness = 0.58;
+      } else if (/original bottom/i.test(label)) {
+        m.color.setHex(0x1b2836);
+        m.roughness = 0.64;
+      }
+      if (/eye/i.test(label)) { m.roughness = 0.16; m.envMapIntensity = 0.55; }
+      else if (m.envMapIntensity === undefined || m.envMapIntensity === 1) m.envMapIntensity = 0.4;
+    }
+  });
+}
+
 export function person(name) {
   const root = new THREE.Group();
   root.name = name;
@@ -467,6 +602,7 @@ export function person(name) {
         // Animation changes the silhouette beyond a mesh's static bounding box.
         if (part.isSkinnedMesh) part.frustumCulled = false;
       });
+      polishLook(scene, name);
       if (!animations.some(clip => clip.name === 'Walk')) {
         const walkSource = animations.find(c => c.name === 'Walk_Brisk' || c.name === 'Jog');
         if (walkSource) {
@@ -518,6 +654,8 @@ export function animatePerson(root, dt, distance = 0, jumpAge = null) {
   if (!walk) {
     rig.mixer.update(dt);
     naturalArms(rig.scene, 0, 0, 1, rig.rest);
+    closedStance(rig.scene, rig.stand);
+    if (rig.idleOffset != null) rig.scene.position.y = rig.idleOffset + Math.sin(performance.now() * 0.0016) * 0.006;
     return;
   }
   const run = rig.actions.get('Run'), jump = rig.actions.get('Jump');
@@ -530,12 +668,12 @@ export function animatePerson(root, dt, distance = 0, jumpAge = null) {
   rig.movement = THREE.MathUtils.damp(rig.movement, moving, groundedBlend, dt);
   
   // Run speed sits above the walk; the band matches WALK_SPEED and RUN_SPEED.
-  const runTarget = THREE.MathUtils.smoothstep(rig.smoothedSpeed, 2.0, 3.2);
+  const runTarget = THREE.MathUtils.smoothstep(rig.smoothedSpeed, 2.6, 3.8);
   rig.running = THREE.MathUtils.damp(rig.running, runTarget, 10, dt);
   rig.jumping = THREE.MathUtils.damp(rig.jumping, jumpAge === null ? 0 : 1, 21, dt);
 
   // One phase is two steps. The distance matches the planted foot so it does not skate.
-  const cycleLen = THREE.MathUtils.lerp(1.12, 1.9, rig.running);
+  const cycleLen = THREE.MathUtils.lerp(1.32, 2.05, rig.running);
   if (distance > 0.0005) {
     rig.phase = (rig.phase + distance / cycleLen) % 1;
   } else if (rig.movement > 0.06) {
@@ -569,14 +707,15 @@ export function animatePerson(root, dt, distance = 0, jumpAge = null) {
   rig.scene.position.y = THREE.MathUtils.damp(rig.scene.position.y, rig.idleOffset, 12, dt);
   rig.mixer.update(dt);
   const gait = rig.movement * (1 - rig.jumping);
-  const lift = THREE.MathUtils.lerp(0.09, 0.18, rig.running);
-  humanGait(rig.scene, rig.phase, gait, rig.stand, cycleLen, lift);
+  const lift = THREE.MathUtils.lerp(0.11, 0.2, rig.running);
+  if (rig.jumping < 0.25) humanGait(rig.scene, rig.phase, gait, rig.stand, cycleLen, lift);
   // Left heel strikes at phase 0, so the left arm is back. The forearm lags.
   const armPhase = rig.phase * Math.PI * 2;
   const amp = THREE.MathUtils.lerp(1, 1.25, rig.running) * rig.movement;
   const upperSwing = -Math.cos(armPhase) * amp;
   const foreSwing = -Math.cos(armPhase - 0.5) * amp;
   naturalArms(rig.scene, upperSwing, foreSwing, 1 - rig.jumping * 0.85, rig.rest);
+  if (gait < 0.15 && rig.jumping < 0.05) rig.scene.position.y = rig.idleOffset + Math.sin(performance.now() * 0.0016) * 0.006;
 }
 
 let shadowMaterial;

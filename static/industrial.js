@@ -1,7 +1,13 @@
 import * as THREE from './vendor/three.module.js';
+import { equipmentMaps } from './materials.js';
+
+const brushed = equipmentMaps();
 
 export function metal(color, roughness = .48) {
-  return new THREE.MeshStandardMaterial({color, roughness, metalness: .25});
+  return new THREE.MeshStandardMaterial({
+    color, roughness, metalness: .42,
+    bumpMap: brushed.bumpMap, bumpScale: .045,
+  });
 }
 
 function add(parent, geometry, material, position) {

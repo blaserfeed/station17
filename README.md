@@ -33,4 +33,3 @@ WASD — движение; мышь — обзор после одного ще�
 Модели адаптированы для Анны и Сергея из коллекции Innerscene на базе MakeHuman. Лицензия CC0 1.0. В комплект входят уменьшенные текстуры и локальные файлы с анимациями. [Maya](https://www.innerscene.com/tools/library/3d-parts/locomotion-collection-maya-3d-person-animated-1499b2fd), [Sam](https://www.innerscene.com/tools/library/3d-parts/idle-standing-sam-3d-person-animated-1f9f1217).
 
 GLTFLoader и BufferGeometryUtils входят в Three.js r180 (MIT, см. static/vendor/LICENSE-three.txt).
-# station17

@@ -8,7 +8,7 @@ from urllib.parse import urlparse,unquote
 from .core import apply,public_game,GameError
 from .content import VOICE_COMMANDS,GESTURES
 ROOT=Path(__file__).resolve().parents[1]
-DEFAULT_SETTINGS={'volume':35,'large':False,'motion':True,'contrast':False}
+DEFAULT_SETTINGS={'volume':35,'music':70,'effects':80,'large':False,'motion':True,'contrast':False,'graphics':1}
 
 def connect(path):
  db=sqlite3.connect(path,timeout=10);db.row_factory=sqlite3.Row;db.execute('PRAGMA foreign_keys=ON');return db
@@ -116,8 +116,10 @@ class Handler(BaseHTTPRequestHandler):
      if not isinstance(cfg,dict) or set(cfg)-set(DEFAULT_SETTINGS):raise GameError('Неизвестная настройка.')
      current=json.loads(p['settings'])
      for k,v in cfg.items():
-      if k=='volume':
+      if k in ('volume','music','effects'):
        if type(v) is not int or not 0<=v<=100:raise GameError('Громкость должна быть от 0 до 100.')
+      elif k=='graphics':
+       if type(v) is not int or v not in (0,1,2):raise GameError('Режим графики: 0, 1 или 2.')
       elif type(v) is not bool:raise GameError('Настройка должна иметь значение да или нет.')
       current[k]=v
      db.execute('UPDATE profiles SET settings=? WHERE id=?',(json.dumps(current),profile));event={'message':'Настройки сохранены.'}

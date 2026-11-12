@@ -5,7 +5,7 @@ from pathlib import Path
 from http.server import ThreadingHTTPServer,BaseHTTPRequestHandler
 from http.cookies import SimpleCookie
 from urllib.parse import urlparse,unquote
-from .core import apply,public_game,GameError
+from .core import apply,public_game,GameError,achievement
 from .content import VOICE_COMMANDS,GESTURES
 ROOT=Path(__file__).resolve().parents[1]
 DEFAULT_SETTINGS={'volume':35,'music':70,'effects':80,'large':False,'motion':True,'contrast':False,'graphics':1}
@@ -95,6 +95,8 @@ class Handler(BaseHTTPRequestHandler):
    path=urlparse(self.path).path
    with connect(self.server.db_path) as db:
     p,cookie=self.profile(db);profile=p['id'];db.execute('BEGIN IMMEDIATE')
+    # Read the revision after acquiring the write lock: another tab may have saved.
+    p=db.execute('SELECT * FROM profiles WHERE id=?',(profile,)).fetchone()
     rid=data.get('request_id')
     if not isinstance(rid,str) or not 8<=len(rid)<=80:raise GameError('Запрос должен иметь уникальный идентификатор.')
     digest=hashlib.sha256((path+json.dumps({k:v for k,v in data.items() if k not in ('request_id','revision')},sort_keys=True)).encode()).hexdigest()
@@ -110,7 +112,7 @@ class Handler(BaseHTTPRequestHandler):
      game,event=apply(game,kind,payload,bool(p['full_access']))
      db.execute('UPDATE profiles SET game=? WHERE id=?',(json.dumps(game,ensure_ascii=False),profile))
      if game['phase'] in ('over','results'):
-      db.execute('INSERT OR IGNORE INTO results(profile,run_id,attempt,ending,score,stability,achievement,created) VALUES(?,?,?,?,?,?,?,?)',(profile,game['run_id'],game['attempt'],game['ending'],game['P'],game['S'],int(game['phase']=='results' and game['total_errors']==0 and game['total_hits']==0),time.time()))
+      db.execute('INSERT OR IGNORE INTO results(profile,run_id,attempt,ending,score,stability,achievement,created) VALUES(?,?,?,?,?,?,?,?)',(profile,game['run_id'],game['attempt'],game['ending'],game['P'],game['S'],int(achievement(game)),time.time()))
     elif path=='/api/settings':
      cfg=data.get('settings',{})
      if not isinstance(cfg,dict) or set(cfg)-set(DEFAULT_SETTINGS):raise GameError('Неизвестная настройка.')

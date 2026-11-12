@@ -1,13 +1,24 @@
 """Проверки расследования и временных зависимостей версии 4."""
 import unittest,tempfile,threading,json,urllib.request,urllib.error,http.cookiejar,uuid,sys,time,copy
+from concurrent.futures import ThreadPoolExecutor
+from unittest.mock import patch
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from backend.core import fresh,apply,public_game,GameError
-from backend.content import EPOCHS,VALVE,SAFE,BEACON,NPC,FLOOD_WALL
-from backend.server import GameServer,connect,signed_event,settle
-from backend.collision import can_stand
+from backend.core import fresh,apply,public_game,GameError,objective
+from backend.content import EPOCHS,VALVE,SAFE,BEACON,NPC,FLOOD_WALL,PORTAL,PORTAL_CONSOLE,PORTAL_FUSE,PORTAL_EXIT,SPAWN
+from backend.server import GameServer,Handler,connect,signed_event,settle
+from backend.collision import can_stand,DRESSING
 
-def hop(g,stage):return g if g['stage']==stage else apply(g,'travel',{'target':stage,'position':g['position']})[0]
+def powered(g):
+ if g['portal']['repaired']:return g
+ g,_=apply(g,'collect',{'id':'portal_fuse','position':PORTAL_FUSE})
+ return apply(g,'portal_repair',{'position':PORTAL_CONSOLE})[0]
+
+def hop(g,stage):
+ if g['stage']==stage:return g
+ g,_=apply(powered(g),'portal_open',{'target':stage,'position':PORTAL_CONSOLE})
+ return apply(g,'travel',{'position':PORTAL})[0]
+
 def read(g,stage,name):
  g=hop(g,stage);c=next(c for c in EPOCHS[stage]['clues'] if c['id']==name)
  return apply(g,'collect',{'id':name,'position':c['pos']})[0]
@@ -26,11 +37,11 @@ class Investigation(unittest.TestCase):
   g=fresh()
   for i in [2,0,1]:g=hop(g,i)
   self.assertEqual(g['visits'],[1,2,1])
- def test_a04_same_physical_location(self):
-  g,_=apply(fresh(),'travel',{'target':0,'position':[1,20]});self.assertEqual(g['position'],[1,20])
+ def test_a04_portal_arrival(self):
+  g=hop(fresh(),0);self.assertEqual(g['position'],PORTAL_EXIT);self.assertIsNone(g['portal']['target'])
  def test_a05_travel_invalid_target(self):
   for x in [True,3,-1,'0']:
-   with self.assertRaises(GameError):apply(fresh(),'travel',{'target':x,'position':[0,20]})
+   with self.assertRaises(GameError):apply(powered(fresh()),'portal_open',{'target':x,'position':PORTAL_CONSOLE})
  def test_a06_future_record_carried_to_present(self):
   g=hop(read(fresh(),2,'registry'),1);self.assertIn('registry',[n['id'] for n in public_game(g,False)['notes']])
  def test_a07_document_proximity_required(self):
@@ -72,6 +83,7 @@ class Investigation(unittest.TestCase):
   g=repaired(fresh());p=public_game(hop(g,2),False);self.assertFalse(p['flooded']);self.assertNotIn(FLOOD_WALL,p['walls']);self.assertEqual(g['P'],100)
  def test_a23_objective_points_to_physical_valve(self):
   g=diagnosed(fresh());self.assertEqual(public_game(g,False)['objective']['target'],VALVE)
+  self.assertEqual(public_game(hop(g,2),False)['objective']['target'],PORTAL)
  def test_a24_valve_no_farming(self):
   self.assertEqual(bypass(repaired(fresh()))['P'],100)
  def test_a25_future_log_inaccessible_before_repair(self):
@@ -131,7 +143,7 @@ class Investigation(unittest.TestCase):
  def test_a49_resume_does_not_refill(self):
   g,_=apply(fresh(),'clock',{'running':True},now=100);g,_=apply(g,'clock',{'running':False},now=130);g,_=apply(g,'clock',{'running':True},now=500);g,_=apply(g,'tick',{},now=520);self.assertEqual(g['timer']['remaining'],1450)
  def test_a50_time_travel_uses_same_timer(self):
-  g,_=apply(fresh(),'clock',{'running':True},now=100);g,_=apply(g,'travel',{'target':2,'position':g['position']},now=140);self.assertEqual((g['stage'],g['timer']['remaining']),(2,1460));self.assertTrue(g['timer']['running'])
+  g,_=apply(powered(fresh()),'portal_open',{'target':2,'position':PORTAL_CONSOLE});g,_=apply(g,'clock',{'running':True},now=100);g,_=apply(g,'travel',{'position':PORTAL},now=140);self.assertEqual((g['stage'],g['timer']['remaining']),(2,1460));self.assertTrue(g['timer']['running'])
  def test_a51_puzzle_time_counts(self):
   g,_=apply(fresh(),'clock',{'running':True},now=100);g,_=apply(g,'safe_check',{'values':[0,0,0],'position':SAFE},now=130);self.assertEqual(g['timer']['remaining'],1470)
  def test_a52_timeout_requests_real_cinematic(self):
@@ -150,9 +162,9 @@ class Investigation(unittest.TestCase):
   g,_=apply(fresh(),'clock',{'running':True},now=100);g,e=apply(g,'clock',{'running':False},now=1600);self.assertEqual(g['failure_kind'],'timeout')
 
  def test_a59_travel_avoids_future_equipment(self):
-  g,_=apply(fresh(),'travel',{'target':2,'position':[-34,23]})
+  g=hop(fresh(),2)
   p=public_game(g,False)
-  self.assertNotEqual(g['position'],[-34,23])
+  self.assertEqual(g['position'],PORTAL_EXIT)
   self.assertTrue(can_stand(*g['position'],p['solids']))
 
  def test_a60_legacy_save_inside_npc_recovers(self):
@@ -176,6 +188,80 @@ class Investigation(unittest.TestCase):
   self.assertFalse(can_stand(-25,0,public_game(hop(fresh(),2),False)['solids']))
   self.assertTrue(can_stand(-25,0,public_game(hop(repaired(fresh()),2),False)['solids']))
 
+ def test_a63_autosave_records_walked_position(self):
+  g,_=apply(fresh(),'tick',{'position':[-8,19]})
+  self.assertEqual(public_game(g,False)['position'],[-8,19])
+
+ def test_a64_pause_records_position_and_remaining_time(self):
+  g,_=apply(fresh(),'clock',{'running':True},now=100)
+  g,_=apply(g,'clock',{'running':False,'position':[-8,19]},now=110)
+  self.assertEqual((g['position'],g['timer']['remaining']),([-8,19],1490))
+
+ def test_a65_autosave_rejects_invalid_positions(self):
+  for position in ([float('nan'),0],[999,0],[True,0],None,[0]):
+   with self.subTest(position=position),self.assertRaises(GameError):apply(fresh(),'tick',{'position':position})
+
+ def test_a66_autosave_recovers_inside_equipment(self):
+  g,_=apply(fresh(),'tick',{'position':[-3,11]})
+  self.assertTrue(can_stand(*g['position'],public_game(g,False)['solids']))
+
+ def test_a67_hint_disqualifies_precision_achievement(self):
+  g,_=apply(synced(fresh()),'hint',{})
+  g,_=apply(g,'finish',{'id':'return','position':BEACON},True)
+  self.assertFalse(public_game(g,True)['achievement'])
+
+ def test_a68_decorative_objects_have_physical_footprints(self):
+  for stage in (0,1,2):
+   solids=public_game(hop(fresh(),stage),False)['solids']
+   for key in ('crates','barrels','reel_stands','signs','extinguishers'):
+    for spot in DRESSING[key]:
+     with self.subTest(stage=stage,object=key,position=spot):self.assertFalse(can_stand(*spot[:2],solids))
+   if stage!=2:
+    for point in DRESSING['plants']:self.assertFalse(can_stand(*point,solids))
+
+ def test_a69_story_interactions_remain_reachable(self):
+  from collections import deque
+  for stage in (0,1,2):
+   game=hop(fresh(),stage);game['repairs']['valve']=True
+   public=public_game(game,False);solids=public['solids']
+   # One-metre cardinal moves cannot cross these expanded walls; test the
+   # actual connected walkable area rather than only empty spots at each prop.
+   start=(-2,21);queue=deque([start]);seen={start};reachable=[]
+   while queue:
+    x,z=queue.popleft();reachable.append((x,z))
+    for dx,dz in ((1,0),(-1,0),(0,1),(0,-1)):
+     p=(x+dx,z+dz)
+     if p not in seen:
+      seen.add(p)
+      if can_stand(*p,solids):queue.append(p)
+   targets=[NPC,VALVE,BEACON]+[c['pos'] for c in EPOCHS[stage]['clues']]
+   if stage==1:targets.append(SAFE)
+   for target in targets:
+    with self.subTest(stage=stage,target=target):self.assertTrue(any((x-target[0])**2+(z-target[1])**2<2.4**2 for x,z in reachable))
+
+
+ def test_portal_requires_fuse_and_physical_access(self):
+  g=fresh()
+  self.assertEqual(objective(g)['target'],PORTAL_FUSE)
+  with self.assertRaises(GameError):apply(g,'portal_repair',{'position':PORTAL_CONSOLE})
+  with self.assertRaises(GameError):apply(g,'portal_open',{'target':2,'position':PORTAL_CONSOLE})
+  g=powered(g)
+  with self.assertRaises(GameError):apply(g,'portal_open',{'target':2,'position':SPAWN})
+  g,_=apply(g,'portal_open',{'target':2,'position':PORTAL_CONSOLE})
+  self.assertEqual(g['stage'],1)
+  for position in ([4,21],[5,20],SPAWN):
+   with self.assertRaises(GameError):apply(g,'travel',{'position':position})
+  g,_=apply(g,'travel',{'position':PORTAL,'target':0})
+  self.assertEqual(g['stage'],2)
+  self.assertIsNone(g['portal']['target'])
+  with self.assertRaises(GameError):apply(g,'travel',{'position':PORTAL})
+
+ def test_portal_preserves_existing_investigation(self):
+  g=hop(fresh(),2)
+  del g['portal']
+  self.assertTrue(public_game(g,False)['portal']['repaired'])
+  g,_=apply(g,'portal_open',{'target':1,'position':PORTAL_CONSOLE})
+  self.assertEqual(g['portal']['target'],1)
 
 class HTTP(unittest.TestCase):
  @classmethod
@@ -222,6 +308,40 @@ class HTTP(unittest.TestCase):
   with self.assertRaises(urllib.error.HTTPError) as cm:self.client.open(self.base+'/%2e%2e/backend/server.py')
   self.assertEqual(cm.exception.code,404)
 
+ def test_35_parallel_saves_cannot_overwrite_progress(self):
+  self.post('/api/action',{'kind':'new'})
+  # Cookie processor position is not part of urllib's public ordering contract.
+  jar=next(h.cookiejar for h in self.client.handlers if hasattr(h,'cookiejar'))
+  cookie='; '.join(c.name+'='+c.value for c in jar)
+  barrier=threading.Barrier(2);original=Handler.profile
+  def synchronized(handler,db):
+   value=original(handler,db);barrier.wait(timeout=5);return value
+  def send(rid):
+   raw=json.dumps({'kind':'hint','request_id':rid,'revision':self.state['revision']}).encode()
+   request=urllib.request.Request(self.base+'/api/action',data=raw,headers={'Content-Type':'application/json','Cookie':cookie})
+   try:
+    with urllib.request.urlopen(request,timeout=10) as response:return response.status,json.load(response)
+   except urllib.error.HTTPError as error:return error.code,json.load(error)
+  with patch.object(Handler,'profile',synchronized),ThreadPoolExecutor(max_workers=2) as pool:
+   results=list(pool.map(send,[uuid.uuid4().hex,uuid.uuid4().hex]))
+  self.assertEqual(sorted(code for code,_ in results),[200,409])
+  self.assertEqual(self.get('/api/state')['game']['hints'],1)
+
+ def test_36_achievement_matches_result_history_after_hint(self):
+  self.post('/api/action',{'kind':'new'})
+  game,_=apply(synced(fresh()),'hint',{})
+  jar=next(h.cookiejar for h in self.client.handlers if hasattr(h,'cookiejar'))
+  profile=next(c.value for c in jar if c.name=='chronoshov')
+  with connect(self.path) as db:db.execute('UPDATE profiles SET game=?,full_access=1 WHERE id=?',(json.dumps(game),profile))
+  result=self.post('/api/action',{'kind':'finish','payload':{'id':'return','position':BEACON}})
+  self.assertFalse(result['game']['achievement'])
+  self.assertEqual(result['results'][0]['achievement'],0)
+
+ def test_37_walked_position_survives_reload(self):
+  self.post('/api/action',{'kind':'new'})
+  self.post('/api/action',{'kind':'tick','payload':{'position':[-8,19]}})
+  self.assertEqual(self.get('/api/state')['game']['position'],[-8,19])
+
 
 class ReportingResult(unittest.TextTestResult):
  def startTest(self,test):super().startTest(test);self._started=time.perf_counter()
@@ -229,6 +349,6 @@ class ReportingResult(unittest.TextTestResult):
  def addFailure(self,test,err):super().addFailure(test,err);self._record(test,'Fail',str(err[1]))
  def addError(self,test,err):super().addError(test,err);self._record(test,'Error',str(err[1]))
  def _record(self,test,status,actual):
-  self.records=getattr(self,'records',[]);self.records.append({'id':test._testMethodName,'function':test.__class__.__name__,'steps':test.shortDescription() or test._testMethodName,'expected':'Все утверждения теста выполняются.','actual':actual,'status':status,'seconds':round(time.perf_counter()-self._started,4)})
+  self.records=getattr(self,'records',[]);self.records.append({'id':getattr(test,'_testMethodName',str(test)),'function':test.__class__.__name__,'steps':test.shortDescription() or str(test),'expected':'Все утверждения теста выполняются.','actual':actual,'status':status,'seconds':round(time.perf_counter()-getattr(self,'_started',time.perf_counter()),4)})
 if __name__=='__main__':
  suite=unittest.defaultTestLoader.loadTestsFromModule(sys.modules[__name__]);result=unittest.TextTestRunner(verbosity=2,resultclass=ReportingResult).run(suite);out=Path(__file__).resolve().parents[1]/'reports/functional-tests.json';out.write_text(json.dumps({'run_at':time.strftime('%Y-%m-%dT%H:%M:%S%z'),'total':result.testsRun,'failures':len(result.failures),'errors':len(result.errors),'cases':result.records},ensure_ascii=False,indent=2));sys.exit(not result.wasSuccessful())

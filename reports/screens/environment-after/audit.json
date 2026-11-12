@@ -1,0 +1,34 @@
+{
+  "run_at": "2026-11-12T11:42:57.706Z",
+  "views": [
+    "hall",
+    "archive",
+    "workshop",
+    "tanks",
+    "control",
+    "passage",
+    "windows",
+    "roof"
+  ],
+  "report": [
+    {
+      "year": 2026,
+      "calls": 192,
+      "triangles": 170956,
+      "geometries": 320
+    },
+    {
+      "year": 1978,
+      "calls": 175,
+      "triangles": 168708,
+      "geometries": 305
+    },
+    {
+      "year": 2074,
+      "calls": 206,
+      "triangles": 185030,
+      "geometries": 339
+    }
+  ],
+  "pageErrors": []
+}

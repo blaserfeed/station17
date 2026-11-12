@@ -1,0 +1,52 @@
+{
+  "run_at": "2026-11-12T11:51:25.763Z",
+  "input": "Synthetic Russian speech (macOS Milena)",
+  "results": [
+    {
+      "name": "legacy",
+      "messages": [
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "name": "fixed",
+      "messages": [
+        {
+          "result": [
+            {
+              "conf": 1,
+              "end": 0.51,
+              "start": 0,
+              "word": "вперёд"
+            }
+          ],
+          "text": "вперёд"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "name": "unrestricted",
+      "messages": [
+        {
+          "result": [
+            {
+              "conf": 1,
+              "end": 0.51,
+              "start": 0,
+              "word": "вперёд"
+            }
+          ],
+          "text": "вперёд"
+        },
+        {
+          "text": ""
+        }
+      ]
+    }
+  ]
+}

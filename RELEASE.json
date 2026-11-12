@@ -1,8 +1,8 @@
 {
   "name": "Станция 17 Последняя смена",
   "version": "4.2.0",
-  "date": "2026-11-06",
-  "status": "Готова к сдаче: 168-канальный риг Анны восстановлен без деформаций бёдер и с живой пластикой пальцев и плеч, скорость увеличена (ходьба 3.5 м/с, бег 6.5 м/с), текстуры рубашки и причёски исправлены, атлетичный прыжок откалиброван, все 78 тестов пройдены.",
+  "date": "2026-11-12",
+  "status": "Локальные исправления: голос «вперёд», непрерывные жесты, ходьба 3.5 м/с и бег 6.5 м/с, противоположные пары рук и ног, окружение и сохранения. Подробные проверки: docs/QA_2026-11-12.html.",
   "story_version": 4,
   "epochs": [
     1978,
@@ -17,19 +17,22 @@
   ],
   "timer_seconds": 1500,
   "timeout_cinematic_seconds": 9,
-  "functional_passed": 78,
-  "controls_passed": 11,
+  "functional_passed": 88,
+  "controls_passed": 23,
   "browser_checks_passed": 7,
   "timer_ui_checks_passed": 7,
   "ai": [
     "Vosk русская речь локально",
     "MediaPipe две руки локально"
   ],
-  "human_testing": "Не проводилось агентом. Контроль моделей синтетический.",
+  "human_testing": "Живые испытания с людьми не проводились. Vosk и MediaPipe проверены настоящими моделями с синтетическим микрофоном и камерой.",
   "runtime": "Python 3.10+, браузер WebGL. Без внешних Python-пакетов.",
   "rescue_route_transfers": 4,
   "character_models": [
     "Анна (168-канальный скелет: Idle_Standing, Walk, Run, Jog, Jump)",
     "Сергей (Idle_Standing)"
-  ]
+  ],
+  "clock_checks_passed": 4,
+  "locomotion_checks_passed": 4,
+  "static_batching_checks_passed": 1
 }

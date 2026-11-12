@@ -1,7 +1,7 @@
 """Solid footprints for the station, shared by movement and temporal arrival."""
 from math import cos, sin
 
-from .content import BOUNDS, SPAWN, NPC, VALVE, SAFE, BEACON, DIAGNOSTICS
+from .content import BOUNDS, SPAWN, NPC, VALVE, SAFE, BEACON, DIAGNOSTICS, PORTAL, PORTAL_CONSOLE, PORTAL_FUSE
 
 PLAYER_RADIUS = .43
 DOOR_ANGLE = -1.25
@@ -13,8 +13,16 @@ TURBINES = [(-3, -12), (3, 1), (-3, 11)]
 ARCHIVE_RACKS = [(x, z) for x in (-33, -26, -18) for z in (-20, -10)]
 TANKS = [(x, -22) for x in (17, 23, 30)]
 PLANTERS = [(-34, 23), (34, -24), (32, 9)]
+DRESSING = dict(
+    crates=[(9.2, 15.4, .35), (-9.1, -16.6, -.25), (8.7, -19.6, .2)],
+    barrels=[(20, -21.15), (26.2, -21.15), (-16.4, 16.2)],
+    reel_stands=[(-33.5, 15.4), (33.2, -6.2)],
+    signs=[(6.5, 8.4, .45), (-6.3, -8.6, -.35)],
+    extinguishers=[(-10.15, -23.4, .35), (10.15, 23.3, 2.7), (-10.2, 5.6, -.15), (10.15, -7.4, 2.9)],
+    plants=[(33.1, 20.2), (-33.2, -23.4)],
+)
 LAYOUT = dict(desks=DESKS, chairs=CHAIRS, turbines=TURBINES, racks=ARCHIVE_RACKS,
-              tanks=TANKS, planters=PLANTERS)
+              tanks=TANKS, planters=PLANTERS, dressing=DRESSING)
 
 
 def rectangle(name, x, z, width, depth, top, *, bottom=0, yaw=0):
@@ -57,6 +65,19 @@ def station_solids(walls, stage, safe_open):
     for x, z in TANKS:
         solids.append(circle('tank', x, z, .88, 3.07))
         solids.append(circle('tank-pipe', x, z + 3.3, .14, 3.58, bottom=1.2))
+    for x, z, yaw in DRESSING['crates']:
+        solids.append(rectangle('storage-crates', x, z, .72, .56, .81, yaw=yaw))
+    for x, z in DRESSING['barrels']:
+        solids.append(circle('barrel', x, z, .345, .68))
+    for x, z in DRESSING['reel_stands']:
+        solids.append(rectangle('reel-stand', x, z, .75, .65, .52))
+    for x, z, yaw in DRESSING['signs']:
+        solids.append(rectangle('floor-sign', x, z, .46, .20, .69, yaw=yaw))
+    for x, z, _ in DRESSING['extinguishers']:
+        solids.append(circle('extinguisher', x, z, .15, .98))
+    if stage != 2:
+        for x, z in DRESSING['plants']:
+            solids.append(circle('planter', x, z, .48, .62))
     for x in (-10.8, 10.8):
         for z in range(-24, 25, 12):
             solids.append(rectangle('column', x, z, .7, .7, 8.45))
@@ -67,6 +88,12 @@ def station_solids(walls, stage, safe_open):
         solids.append(rectangle('ceiling', x, 0, 24, 54, 4.24, bottom=4))
     solids.append(rectangle('west-lintel', -25, 0, 6, .7, 3.925, bottom=3.275))
     solids.append(circle('sergey', *NPC, .47, 1.83))
+    for side in (-1,1):
+        solids.append(rectangle('portal-column', PORTAL[0]+side*1.55, PORTAL[1], .46, .75, 3.8))
+    solids.append(rectangle('portal-console', *PORTAL_CONSOLE, .7, .56, 1.25))
+    if stage == 1:
+        solids.append(rectangle('fuse-case', *PORTAL_FUSE, .65, .45, .53))
+
     solids.append(rectangle('valve', VALVE[0], VALVE[1] - .08, 2.72, .90, 2.47))
     solids.append(rectangle('emergency-console', BEACON[0], BEACON[1] - .055, 1.57, .86, 1.90))
     if stage == 1:

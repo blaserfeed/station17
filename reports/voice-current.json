@@ -1,0 +1,40 @@
+{
+  "run_at": "2026-11-12T11:51:38.076Z",
+  "input": "Synthetic Russian speech (macOS Milena); real Vosk model, AudioWorklet and MediaStream",
+  "checks": [
+    {
+      "name": "Actual Russian audio «вперёд» starts forward movement through the microphone pipeline",
+      "status": "Pass"
+    },
+    {
+      "name": "One voice command keeps walking for more than five seconds",
+      "status": "Pass"
+    },
+    {
+      "name": "Actual Russian audio «стой» stops the character",
+      "status": "Pass"
+    }
+  ],
+  "heard": "Услышано: вперёд",
+  "before": [
+    -8,
+    21
+  ],
+  "held": {
+    "position": [
+      -8.215,
+      2.072
+    ],
+    "motion": {
+      "x": 0,
+      "z": -1,
+      "source": "voice"
+    }
+  },
+  "stopped": [
+    -8.215,
+    -0.567
+  ],
+  "tracksEnded": true,
+  "pageErrors": []
+}

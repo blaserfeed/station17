@@ -1,0 +1,35 @@
+{
+  "run_at": "2026-11-12T13:46:16.511Z",
+  "version": "4.2.0",
+  "checks": [
+    {
+      "name": "Local skinned Anna and Sergey assets load",
+      "status": "Pass"
+    },
+    {
+      "name": "Picked up the fuse, powered the portal, opened it and crossed the physical threshold",
+      "status": "Pass"
+    },
+    {
+      "name": "Reached the future report with keyboard movement",
+      "status": "Pass"
+    },
+    {
+      "name": "One wrong route gives actionable feedback and journal preserves selection",
+      "status": "Pass"
+    },
+    {
+      "name": "Repair drains the future wing and exposes a physical reel",
+      "status": "Pass"
+    },
+    {
+      "name": "Oleg walks out of the portal and reunites with Anna in the rescue ending",
+      "status": "Pass"
+    },
+    {
+      "name": "Progress persists after reload",
+      "status": "Pass"
+    }
+  ],
+  "pageErrors": []
+}

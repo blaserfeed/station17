@@ -1,6 +1,6 @@
 {
-  "run_at": "2026-11-10T15:56:54.303Z",
-  "total": 13,
+  "run_at": "2026-11-12T13:29:59.888Z",
+  "total": 23,
   "checks": [
     {
       "name": "Movement and camera act simultaneously",
@@ -31,7 +31,7 @@
       "status": "Pass"
     },
     {
-      "name": "Hands lost stop both channels",
+      "name": "Hands lost stop both channels after a short tracking grace",
       "status": "Pass"
     },
     {
@@ -52,6 +52,46 @@
     },
     {
       "name": "A brief weak frame keeps the current gesture",
+      "status": "Pass"
+    },
+    {
+      "name": "Forward vocabulary includes the actual Russian model spelling",
+      "status": "Pass"
+    },
+    {
+      "name": "The last command wins without splitting camera phrases",
+      "status": "Pass"
+    },
+    {
+      "name": "Words containing commands do not trigger movement",
+      "status": "Pass"
+    },
+    {
+      "name": "Gesture begins within two normal camera frames",
+      "status": "Pass"
+    },
+    {
+      "name": "A short lost frame does not interrupt a held gesture",
+      "status": "Pass"
+    },
+    {
+      "name": "A held gesture tolerates weaker recognition without repeated stops",
+      "status": "Pass"
+    },
+    {
+      "name": "Palm stops immediately and missing hands cannot latch movement",
+      "status": "Pass"
+    },
+    {
+      "name": "Voice movement continues until stop rather than expiring",
+      "status": "Pass"
+    },
+    {
+      "name": "Movement freshness is independent of the camera channel",
+      "status": "Pass"
+    },
+    {
+      "name": "Idle controls do not claim gesture input",
       "status": "Pass"
     }
   ]

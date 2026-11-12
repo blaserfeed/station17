@@ -2,9 +2,9 @@ import * as THREE from './vendor/three.module.js';
 import { skyTexture } from './materials.js';
 
 const ERAS = [
-  {fog: 0xe6d2ae, near: 70, far: 250, sun: 0xffd09a, sunI: 2.05, sky: 0xfff1d2, ground: 0x8a704f, fill: 0xffe0b4, exposure: 1.04, dust: 0xf3e2c4},
+  {fog: 0xe6d2ae, near: 70, far: 250, sun: 0xffe2b8, sunI: 1.7, sky: 0xfff1d2, ground: 0x8a704f, fill: 0xffe0b4, exposure: .98, dust: 0xf3e2c4},
   {fog: 0xb7c8d2, near: 52, far: 220, sun: 0xd7e6f0, sunI: 1.35, sky: 0xd5e3ee, ground: 0x5c6c76, fill: 0xb7c5d0, exposure: 0.92, dust: 0xd5dde2},
-  {fog: 0xc7e6e0, near: 64, far: 240, sun: 0xd9f6f1, sunI: 1.7, sky: 0xd8f7f3, ground: 0x688e8b, fill: 0xa4ddd6, exposure: 1.0, dust: 0xd7f3ef},
+  {fog: 0xc7e6e0, near: 64, far: 240, sun: 0xd9f6f1, sunI: 1.45, sky: 0xe2f3ef, ground: 0x688e8b, fill: 0xa4ddd6, exposure: .96, dust: 0xd7f3ef},
 ];
 
 export function attachAtmosphere(scene, renderer) {

@@ -1,7 +1,7 @@
 // Procedural station beds and cues. No external audio files.
 export function createSound() {
   let ctx, master, music, fx, bed, hum, air, noise;
-  let era = -1;
+  let era = -1, listening = false;
   const levels = {master: .35, music: .7, effects: .8};
 
   function ensure() {
@@ -27,8 +27,8 @@ export function createSound() {
   function applyLevels() {
     if (!ctx) return;
     master.gain.value = levels.master;
-    music.gain.value = levels.music;
-    fx.gain.value = levels.effects;
+    music.gain.value = levels.music * (listening ? .2 : 1);
+    fx.gain.value = levels.effects * (listening ? .4 : 1);
   }
 
   function setVolumes(settings = {}) {
@@ -37,6 +37,8 @@ export function createSound() {
     levels.effects = (settings.effects ?? 80) / 100;
     applyLevels();
   }
+
+  function setListening(value) { listening = !!value; applyLevels(); }
 
   function stopBed() {
     if (bed) { try { bed.stop(); } catch (e) {} bed.disconnect(); bed = null; }
@@ -125,14 +127,14 @@ export function createSound() {
   function duck() {
     if (!music) return;
     music.gain.cancelScheduledValues(ctx.currentTime);
-    music.gain.linearRampToValueAtTime(levels.music * .15, ctx.currentTime + .4);
+    music.gain.linearRampToValueAtTime(levels.music * (listening ? .03 : .15), ctx.currentTime + .4);
   }
 
   function restore() {
     if (!music) return;
     music.gain.cancelScheduledValues(ctx.currentTime);
-    music.gain.linearRampToValueAtTime(levels.music, ctx.currentTime + .8);
+    music.gain.linearRampToValueAtTime(levels.music * (listening ? .2 : 1), ctx.currentTime + .8);
   }
 
-  return {ensure, setVolumes, playBed, cue, step, land, travel, duck, restore, stopBed};
+  return {ensure, setVolumes, setListening, playBed, cue, step, land, travel, duck, restore, stopBed};
 }

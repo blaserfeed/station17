@@ -1,26 +1,26 @@
 {
-  "run_at": "2026-11-06T16:26:04+0500",
-  "total": 78,
+  "run_at": "2026-11-12T18:29:59+0500",
+  "total": 90,
   "failures": 0,
   "errors": 0,
   "cases": [
     {
       "id": "test_19_health",
       "function": "HTTP",
-      "steps": "test_19_health",
+      "steps": "test_19_health (__main__.HTTP.test_19_health)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0584
+      "seconds": 0.0134
     },
     {
       "id": "test_20_http_new",
       "function": "HTTP",
-      "steps": "test_20_http_new",
+      "steps": "test_20_http_new (__main__.HTTP.test_20_http_new)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0342
+      "seconds": 0.0034
     },
     {
       "id": "test_21_idempotency",
@@ -29,129 +29,156 @@
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0363
+      "seconds": 0.007
     },
     {
       "id": "test_22_id_reuse_rejected",
       "function": "HTTP",
-      "steps": "test_22_id_reuse_rejected",
+      "steps": "test_22_id_reuse_rejected (__main__.HTTP.test_22_id_reuse_rejected)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0381
+      "seconds": 0.0035
     },
     {
       "id": "test_23_stale_revision",
       "function": "HTTP",
-      "steps": "test_23_stale_revision",
+      "steps": "test_23_stale_revision (__main__.HTTP.test_23_stale_revision)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0371
+      "seconds": 0.0035
     },
     {
       "id": "test_24_payment_failure_cancel",
       "function": "HTTP",
-      "steps": "test_24_payment_failure_cancel",
+      "steps": "test_24_payment_failure_cancel (__main__.HTTP.test_24_payment_failure_cancel)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0462
+      "seconds": 0.0052
     },
     {
       "id": "test_25_payment_success_once",
       "function": "HTTP",
-      "steps": "test_25_payment_success_once",
+      "steps": "test_25_payment_success_once (__main__.HTTP.test_25_payment_success_once)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0523
+      "seconds": 0.0083
     },
     {
       "id": "test_26_forged_callback",
       "function": "HTTP",
-      "steps": "test_26_forged_callback",
+      "steps": "test_26_forged_callback (__main__.HTTP.test_26_forged_callback)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0363
+      "seconds": 0.0041
     },
     {
       "id": "test_27_client_access_flag_ignored",
       "function": "HTTP",
-      "steps": "test_27_client_access_flag_ignored",
+      "steps": "test_27_client_access_flag_ignored (__main__.HTTP.test_27_client_access_flag_ignored)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0324
+      "seconds": 0.0027
     },
     {
       "id": "test_28_cross_origin",
       "function": "HTTP",
-      "steps": "test_28_cross_origin",
+      "steps": "test_28_cross_origin (__main__.HTTP.test_28_cross_origin)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0282
+      "seconds": 0.0017
     },
     {
       "id": "test_29_settings_validation",
       "function": "HTTP",
-      "steps": "test_29_settings_validation",
+      "steps": "test_29_settings_validation (__main__.HTTP.test_29_settings_validation)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0331
+      "seconds": 0.0021
     },
     {
       "id": "test_30_save_reload",
       "function": "HTTP",
-      "steps": "test_30_save_reload",
+      "steps": "test_30_save_reload (__main__.HTTP.test_30_save_reload)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0375
+      "seconds": 0.0039
     },
     {
       "id": "test_31_price_is_server_owned",
       "function": "HTTP",
-      "steps": "test_31_price_is_server_owned",
+      "steps": "test_31_price_is_server_owned (__main__.HTTP.test_31_price_is_server_owned)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0285
+      "seconds": 0.0022
     },
     {
       "id": "test_32_profile_isolation",
       "function": "HTTP",
-      "steps": "test_32_profile_isolation",
+      "steps": "test_32_profile_isolation (__main__.HTTP.test_32_profile_isolation)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0583
+      "seconds": 0.004
     },
     {
       "id": "test_33_unknown_action",
       "function": "HTTP",
-      "steps": "test_33_unknown_action",
+      "steps": "test_33_unknown_action (__main__.HTTP.test_33_unknown_action)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0272
+      "seconds": 0.0017
     },
     {
       "id": "test_34_static_traversal",
       "function": "HTTP",
-      "steps": "test_34_static_traversal",
+      "steps": "test_34_static_traversal (__main__.HTTP.test_34_static_traversal)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0307
+      "seconds": 0.0017
+    },
+    {
+      "id": "test_35_parallel_saves_cannot_overwrite_progress",
+      "function": "HTTP",
+      "steps": "test_35_parallel_saves_cannot_overwrite_progress (__main__.HTTP.test_35_parallel_saves_cannot_overwrite_progress)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0087
+    },
+    {
+      "id": "test_36_achievement_matches_result_history_after_hint",
+      "function": "HTTP",
+      "steps": "test_36_achievement_matches_result_history_after_hint (__main__.HTTP.test_36_achievement_matches_result_history_after_hint)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0071
+    },
+    {
+      "id": "test_37_walked_position_survives_reload",
+      "function": "HTTP",
+      "steps": "test_37_walked_position_survives_reload (__main__.HTTP.test_37_walked_position_survives_reload)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0066
     },
     {
       "id": "test_a01_start_in_present",
       "function": "Investigation",
-      "steps": "test_a01_start_in_present",
+      "steps": "test_a01_start_in_present (__main__.Investigation.test_a01_start_in_present)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
@@ -160,52 +187,52 @@
     {
       "id": "test_a02_no_random_hazards_any_epoch",
       "function": "Investigation",
-      "steps": "test_a02_no_random_hazards_any_epoch",
+      "steps": "test_a02_no_random_hazards_any_epoch (__main__.Investigation.test_a02_no_random_hazards_any_epoch)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0021
+    },
+    {
+      "id": "test_a03_free_cross_time_exploration",
+      "function": "Investigation",
+      "steps": "test_a03_free_cross_time_exploration (__main__.Investigation.test_a03_free_cross_time_exploration)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0012
+    },
+    {
+      "id": "test_a04_portal_arrival",
+      "function": "Investigation",
+      "steps": "test_a04_portal_arrival (__main__.Investigation.test_a04_portal_arrival)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0006
+    },
+    {
+      "id": "test_a05_travel_invalid_target",
+      "function": "Investigation",
+      "steps": "test_a05_travel_invalid_target (__main__.Investigation.test_a05_travel_invalid_target)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.001
+    },
+    {
+      "id": "test_a06_future_record_carried_to_present",
+      "function": "Investigation",
+      "steps": "test_a06_future_record_carried_to_present (__main__.Investigation.test_a06_future_record_carried_to_present)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
       "seconds": 0.0018
     },
     {
-      "id": "test_a03_free_cross_time_exploration",
-      "function": "Investigation",
-      "steps": "test_a03_free_cross_time_exploration",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0009
-    },
-    {
-      "id": "test_a04_same_physical_location",
-      "function": "Investigation",
-      "steps": "test_a04_same_physical_location",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0003
-    },
-    {
-      "id": "test_a05_travel_invalid_target",
-      "function": "Investigation",
-      "steps": "test_a05_travel_invalid_target",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0005
-    },
-    {
-      "id": "test_a06_future_record_carried_to_present",
-      "function": "Investigation",
-      "steps": "test_a06_future_record_carried_to_present",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0038
-    },
-    {
       "id": "test_a07_document_proximity_required",
       "function": "Investigation",
-      "steps": "test_a07_document_proximity_required",
+      "steps": "test_a07_document_proximity_required (__main__.Investigation.test_a07_document_proximity_required)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
@@ -214,34 +241,34 @@
     {
       "id": "test_a08_document_wrong_epoch_rejected",
       "function": "Investigation",
-      "steps": "test_a08_document_wrong_epoch_rejected",
+      "steps": "test_a08_document_wrong_epoch_rejected (__main__.Investigation.test_a08_document_wrong_epoch_rejected)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0002
+      "seconds": 0.0001
     },
     {
       "id": "test_a09_documents_not_duplicated",
       "function": "Investigation",
-      "steps": "test_a09_documents_not_duplicated",
+      "steps": "test_a09_documents_not_duplicated (__main__.Investigation.test_a09_documents_not_duplicated)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0006
+      "seconds": 0.0007
     },
     {
       "id": "test_a10_safe_correct_code_award",
       "function": "Investigation",
-      "steps": "test_a10_safe_correct_code_award",
+      "steps": "test_a10_safe_correct_code_award (__main__.Investigation.test_a10_safe_correct_code_award)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0075
+      "seconds": 0.0052
     },
     {
       "id": "test_a11_safe_wrong_code_no_damage",
       "function": "Investigation",
-      "steps": "test_a11_safe_wrong_code_no_damage",
+      "steps": "test_a11_safe_wrong_code_no_damage (__main__.Investigation.test_a11_safe_wrong_code_no_damage)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
@@ -250,34 +277,34 @@
     {
       "id": "test_a12_safe_no_farming",
       "function": "Investigation",
-      "steps": "test_a12_safe_no_farming",
+      "steps": "test_a12_safe_no_farming (__main__.Investigation.test_a12_safe_no_farming)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0064
+      "seconds": 0.0041
     },
     {
       "id": "test_a13_safe_only_present",
       "function": "Investigation",
-      "steps": "test_a13_safe_only_present",
+      "steps": "test_a13_safe_only_present (__main__.Investigation.test_a13_safe_only_present)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0004
+      "seconds": 0.0006
     },
     {
       "id": "test_a14_bad_digits_rejected",
       "function": "Investigation",
-      "steps": "test_a14_bad_digits_rejected",
+      "steps": "test_a14_bad_digits_rejected (__main__.Investigation.test_a14_bad_digits_rejected)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0007
+      "seconds": 0.0005
     },
     {
       "id": "test_a15_bypass_needs_future_diagnostics",
       "function": "Investigation",
-      "steps": "test_a15_bypass_needs_future_diagnostics",
+      "steps": "test_a15_bypass_needs_future_diagnostics (__main__.Investigation.test_a15_bypass_needs_future_diagnostics)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
@@ -286,52 +313,52 @@
     {
       "id": "test_a16_bypass_only_past",
       "function": "Investigation",
-      "steps": "test_a16_bypass_only_past",
+      "steps": "test_a16_bypass_only_past (__main__.Investigation.test_a16_bypass_only_past)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0005
+      "seconds": 0.0006
     },
     {
       "id": "test_a17_bypass_requires_proximity",
       "function": "Investigation",
-      "steps": "test_a17_bypass_requires_proximity",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0009
-    },
-    {
-      "id": "test_a18_invalid_bypass_rejected",
-      "function": "Investigation",
-      "steps": "test_a18_invalid_bypass_rejected",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0043
-    },
-    {
-      "id": "test_a19_bypass_requires_no_safe_or_older_puzzle",
-      "function": "Investigation",
-      "steps": "test_a19_bypass_requires_no_safe_or_older_puzzle",
+      "steps": "test_a17_bypass_requires_proximity (__main__.Investigation.test_a17_bypass_requires_proximity)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
       "seconds": 0.001
     },
     {
-      "id": "test_a20_both_wrong_paths_give_feedback",
+      "id": "test_a18_invalid_bypass_rejected",
       "function": "Investigation",
-      "steps": "test_a20_both_wrong_paths_give_feedback",
+      "steps": "test_a18_invalid_bypass_rejected (__main__.Investigation.test_a18_invalid_bypass_rejected)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0009
+      "seconds": 0.0035
+    },
+    {
+      "id": "test_a19_bypass_requires_no_safe_or_older_puzzle",
+      "function": "Investigation",
+      "steps": "test_a19_bypass_requires_no_safe_or_older_puzzle (__main__.Investigation.test_a19_bypass_requires_no_safe_or_older_puzzle)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0008
+    },
+    {
+      "id": "test_a20_both_wrong_paths_give_feedback",
+      "function": "Investigation",
+      "steps": "test_a20_both_wrong_paths_give_feedback (__main__.Investigation.test_a20_both_wrong_paths_give_feedback)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0008
     },
     {
       "id": "test_a21_incorrect_bypass_keeps_link_quality",
       "function": "Investigation",
-      "steps": "test_a21_incorrect_bypass_keeps_link_quality",
+      "steps": "test_a21_incorrect_bypass_keeps_link_quality (__main__.Investigation.test_a21_incorrect_bypass_keeps_link_quality)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
@@ -340,371 +367,452 @@
     {
       "id": "test_a22_valve_riddle_and_causality",
       "function": "Investigation",
-      "steps": "test_a22_valve_riddle_and_causality",
+      "steps": "test_a22_valve_riddle_and_causality (__main__.Investigation.test_a22_valve_riddle_and_causality)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0063
+      "seconds": 0.0018
     },
     {
       "id": "test_a23_objective_points_to_physical_valve",
       "function": "Investigation",
-      "steps": "test_a23_objective_points_to_physical_valve",
+      "steps": "test_a23_objective_points_to_physical_valve (__main__.Investigation.test_a23_objective_points_to_physical_valve)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.001
+      "seconds": 0.0012
     },
     {
       "id": "test_a24_valve_no_farming",
       "function": "Investigation",
-      "steps": "test_a24_valve_no_farming",
+      "steps": "test_a24_valve_no_farming (__main__.Investigation.test_a24_valve_no_farming)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.001
+      "seconds": 0.0008
     },
     {
       "id": "test_a25_future_log_inaccessible_before_repair",
       "function": "Investigation",
-      "steps": "test_a25_future_log_inaccessible_before_repair",
+      "steps": "test_a25_future_log_inaccessible_before_repair (__main__.Investigation.test_a25_future_log_inaccessible_before_repair)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0004
+      "seconds": 0.0005
     },
     {
       "id": "test_a26_future_log_accessible_after_repair",
       "function": "Investigation",
-      "steps": "test_a26_future_log_accessible_after_repair",
+      "steps": "test_a26_future_log_accessible_after_repair (__main__.Investigation.test_a26_future_log_accessible_after_repair)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0043
+      "seconds": 0.0011
     },
     {
       "id": "test_a27_repair_opens_safe_finish_but_does_not_rescue",
       "function": "Investigation",
-      "steps": "test_a27_repair_opens_safe_finish_but_does_not_rescue",
+      "steps": "test_a27_repair_opens_safe_finish_but_does_not_rescue (__main__.Investigation.test_a27_repair_opens_safe_finish_but_does_not_rescue)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0065
+      "seconds": 0.0011
     },
     {
       "id": "test_a28_rescue_route_uses_four_transfers",
       "function": "Investigation",
-      "steps": "test_a28_rescue_route_uses_four_transfers",
+      "steps": "test_a28_rescue_route_uses_four_transfers (__main__.Investigation.test_a28_rescue_route_uses_four_transfers)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0094
+      "seconds": 0.0012
     },
     {
       "id": "test_a29_legacy_save_recognizes_completed_repair",
       "function": "Investigation",
-      "steps": "test_a29_legacy_save_recognizes_completed_repair",
+      "steps": "test_a29_legacy_save_recognizes_completed_repair (__main__.Investigation.test_a29_legacy_save_recognizes_completed_repair)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0006
+    },
+    {
+      "id": "test_a30_reel_remains_in_inventory_after_return",
+      "function": "Investigation",
+      "steps": "test_a30_reel_remains_in_inventory_after_return (__main__.Investigation.test_a30_reel_remains_in_inventory_after_return)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0015
+    },
+    {
+      "id": "test_a31_good_ending_and_maximum_score",
+      "function": "Investigation",
+      "steps": "test_a31_good_ending_and_maximum_score (__main__.Investigation.test_a31_good_ending_and_maximum_score)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0013
+    },
+    {
+      "id": "test_a32_all_three_endings",
+      "function": "Investigation",
+      "steps": "test_a32_all_three_endings (__main__.Investigation.test_a32_all_three_endings)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0013
+    },
+    {
+      "id": "test_a33_ending_requires_paid_chapter",
+      "function": "Investigation",
+      "steps": "test_a33_ending_requires_paid_chapter (__main__.Investigation.test_a33_ending_requires_paid_chapter)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0012
+    },
+    {
+      "id": "test_a34_good_ending_requires_sync",
+      "function": "Investigation",
+      "steps": "test_a34_good_ending_requires_sync (__main__.Investigation.test_a34_good_ending_requires_sync)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
       "seconds": 0.0009
     },
     {
-      "id": "test_a30_reel_remains_in_inventory_after_return",
-      "function": "Investigation",
-      "steps": "test_a30_reel_remains_in_inventory_after_return",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0091
-    },
-    {
-      "id": "test_a31_good_ending_and_maximum_score",
-      "function": "Investigation",
-      "steps": "test_a31_good_ending_and_maximum_score",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0101
-    },
-    {
-      "id": "test_a32_all_three_endings",
-      "function": "Investigation",
-      "steps": "test_a32_all_three_endings",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0093
-    },
-    {
-      "id": "test_a33_ending_requires_paid_chapter",
-      "function": "Investigation",
-      "steps": "test_a33_ending_requires_paid_chapter",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0098
-    },
-    {
-      "id": "test_a34_good_ending_requires_sync",
-      "function": "Investigation",
-      "steps": "test_a34_good_ending_requires_sync",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0064
-    },
-    {
       "id": "test_a35_unsafe_signal_over_and_retry_preserves_repair",
       "function": "Investigation",
-      "steps": "test_a35_unsafe_signal_over_and_retry_preserves_repair",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0059
-    },
-    {
-      "id": "test_a36_accusation_needs_evidence",
-      "function": "Investigation",
-      "steps": "test_a36_accusation_needs_evidence",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0002
-    },
-    {
-      "id": "test_a37_confession_after_future_log",
-      "function": "Investigation",
-      "steps": "test_a37_confession_after_future_log",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0054
-    },
-    {
-      "id": "test_a38_empathy_not_farmed",
-      "function": "Investigation",
-      "steps": "test_a38_empathy_not_farmed",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0004
-    },
-    {
-      "id": "test_a39_reject_nan_position",
-      "function": "Investigation",
-      "steps": "test_a39_reject_nan_position",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0003
-    },
-    {
-      "id": "test_a40_puzzles_cannot_modify_ending_state",
-      "function": "Investigation",
-      "steps": "test_a40_puzzles_cannot_modify_ending_state",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0123
-    },
-    {
-      "id": "test_a41_voice_and_gestures_sources",
-      "function": "Investigation",
-      "steps": "test_a41_voice_and_gestures_sources",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0003
-    },
-    {
-      "id": "test_a42_no_damage_action",
-      "function": "Investigation",
-      "steps": "test_a42_no_damage_action",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0002
-    },
-    {
-      "id": "test_a43_checkpoint_hidden_from_client",
-      "function": "Investigation",
-      "steps": "test_a43_checkpoint_hidden_from_client",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0005
-    },
-    {
-      "id": "test_a44_state_input_is_not_mutated",
-      "function": "Investigation",
-      "steps": "test_a44_state_input_is_not_mutated",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0003
-    },
-    {
-      "id": "test_a45_completed_settings_survive_round_trip",
-      "function": "Investigation",
-      "steps": "test_a45_completed_settings_survive_round_trip",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0129
-    },
-    {
-      "id": "test_a46_timer_default",
-      "function": "Investigation",
-      "steps": "test_a46_timer_default",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0002
-    },
-    {
-      "id": "test_a47_timer_advances_on_server",
-      "function": "Investigation",
-      "steps": "test_a47_timer_advances_on_server",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0003
-    },
-    {
-      "id": "test_a48_pause_freezes_timer",
-      "function": "Investigation",
-      "steps": "test_a48_pause_freezes_timer",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0005
-    },
-    {
-      "id": "test_a49_resume_does_not_refill",
-      "function": "Investigation",
-      "steps": "test_a49_resume_does_not_refill",
-      "expected": "Все утверждения теста выполняются.",
-      "actual": "Ожидаемые значения подтверждены.",
-      "status": "Pass",
-      "seconds": 0.0004
-    },
-    {
-      "id": "test_a50_time_travel_uses_same_timer",
-      "function": "Investigation",
-      "steps": "test_a50_time_travel_uses_same_timer",
+      "steps": "test_a35_unsafe_signal_over_and_retry_preserves_repair (__main__.Investigation.test_a35_unsafe_signal_over_and_retry_preserves_repair)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
       "seconds": 0.001
     },
     {
-      "id": "test_a51_puzzle_time_counts",
+      "id": "test_a36_accusation_needs_evidence",
       "function": "Investigation",
-      "steps": "test_a51_puzzle_time_counts",
+      "steps": "test_a36_accusation_needs_evidence (__main__.Investigation.test_a36_accusation_needs_evidence)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0004
+      "seconds": 0.0001
     },
     {
-      "id": "test_a52_timeout_requests_real_cinematic",
+      "id": "test_a37_confession_after_future_log",
       "function": "Investigation",
-      "steps": "test_a52_timeout_requests_real_cinematic",
+      "steps": "test_a37_confession_after_future_log (__main__.Investigation.test_a37_confession_after_future_log)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0004
+      "seconds": 0.0011
     },
     {
-      "id": "test_a53_ending_wins_before_deadline",
+      "id": "test_a38_empathy_not_farmed",
       "function": "Investigation",
-      "steps": "test_a53_ending_wins_before_deadline",
+      "steps": "test_a38_empathy_not_farmed (__main__.Investigation.test_a38_empathy_not_farmed)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0115
+      "seconds": 0.0001
     },
     {
-      "id": "test_a54_timeout_wins_finish_race",
+      "id": "test_a39_reject_nan_position",
       "function": "Investigation",
-      "steps": "test_a54_timeout_wins_finish_race",
+      "steps": "test_a39_reject_nan_position (__main__.Investigation.test_a39_reject_nan_position)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0135
+      "seconds": 0.0001
     },
     {
-      "id": "test_a55_timeout_retry_is_new_attempt",
+      "id": "test_a40_puzzles_cannot_modify_ending_state",
       "function": "Investigation",
-      "steps": "test_a55_timeout_retry_is_new_attempt",
+      "steps": "test_a40_puzzles_cannot_modify_ending_state (__main__.Investigation.test_a40_puzzles_cannot_modify_ending_state)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0133
+      "seconds": 0.0012
     },
     {
-      "id": "test_a56_signal_retry_keeps_remaining_time",
+      "id": "test_a41_voice_and_gestures_sources",
       "function": "Investigation",
-      "steps": "test_a56_signal_retry_keeps_remaining_time",
+      "steps": "test_a41_voice_and_gestures_sources (__main__.Investigation.test_a41_voice_and_gestures_sources)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0072
+      "seconds": 0.0001
     },
     {
-      "id": "test_a57_client_cannot_refill_timer",
+      "id": "test_a42_no_damage_action",
       "function": "Investigation",
-      "steps": "test_a57_client_cannot_refill_timer",
+      "steps": "test_a42_no_damage_action (__main__.Investigation.test_a42_no_damage_action)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_a43_checkpoint_hidden_from_client",
+      "function": "Investigation",
+      "steps": "test_a43_checkpoint_hidden_from_client (__main__.Investigation.test_a43_checkpoint_hidden_from_client)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
       "seconds": 0.0002
     },
     {
+      "id": "test_a44_state_input_is_not_mutated",
+      "function": "Investigation",
+      "steps": "test_a44_state_input_is_not_mutated (__main__.Investigation.test_a44_state_input_is_not_mutated)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_a45_completed_settings_survive_round_trip",
+      "function": "Investigation",
+      "steps": "test_a45_completed_settings_survive_round_trip (__main__.Investigation.test_a45_completed_settings_survive_round_trip)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0017
+    },
+    {
+      "id": "test_a46_timer_default",
+      "function": "Investigation",
+      "steps": "test_a46_timer_default (__main__.Investigation.test_a46_timer_default)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0
+    },
+    {
+      "id": "test_a47_timer_advances_on_server",
+      "function": "Investigation",
+      "steps": "test_a47_timer_advances_on_server (__main__.Investigation.test_a47_timer_advances_on_server)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_a48_pause_freezes_timer",
+      "function": "Investigation",
+      "steps": "test_a48_pause_freezes_timer (__main__.Investigation.test_a48_pause_freezes_timer)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_a49_resume_does_not_refill",
+      "function": "Investigation",
+      "steps": "test_a49_resume_does_not_refill (__main__.Investigation.test_a49_resume_does_not_refill)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0002
+    },
+    {
+      "id": "test_a50_time_travel_uses_same_timer",
+      "function": "Investigation",
+      "steps": "test_a50_time_travel_uses_same_timer (__main__.Investigation.test_a50_time_travel_uses_same_timer)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0004
+    },
+    {
+      "id": "test_a51_puzzle_time_counts",
+      "function": "Investigation",
+      "steps": "test_a51_puzzle_time_counts (__main__.Investigation.test_a51_puzzle_time_counts)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_a52_timeout_requests_real_cinematic",
+      "function": "Investigation",
+      "steps": "test_a52_timeout_requests_real_cinematic (__main__.Investigation.test_a52_timeout_requests_real_cinematic)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_a53_ending_wins_before_deadline",
+      "function": "Investigation",
+      "steps": "test_a53_ending_wins_before_deadline (__main__.Investigation.test_a53_ending_wins_before_deadline)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0011
+    },
+    {
+      "id": "test_a54_timeout_wins_finish_race",
+      "function": "Investigation",
+      "steps": "test_a54_timeout_wins_finish_race (__main__.Investigation.test_a54_timeout_wins_finish_race)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0011
+    },
+    {
+      "id": "test_a55_timeout_retry_is_new_attempt",
+      "function": "Investigation",
+      "steps": "test_a55_timeout_retry_is_new_attempt (__main__.Investigation.test_a55_timeout_retry_is_new_attempt)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0011
+    },
+    {
+      "id": "test_a56_signal_retry_keeps_remaining_time",
+      "function": "Investigation",
+      "steps": "test_a56_signal_retry_keeps_remaining_time (__main__.Investigation.test_a56_signal_retry_keeps_remaining_time)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0009
+    },
+    {
+      "id": "test_a57_client_cannot_refill_timer",
+      "function": "Investigation",
+      "steps": "test_a57_client_cannot_refill_timer (__main__.Investigation.test_a57_client_cannot_refill_timer)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0001
+    },
+    {
       "id": "test_a58_pause_at_zero_cannot_avoid_accident",
       "function": "Investigation",
-      "steps": "test_a58_pause_at_zero_cannot_avoid_accident",
+      "steps": "test_a58_pause_at_zero_cannot_avoid_accident (__main__.Investigation.test_a58_pause_at_zero_cannot_avoid_accident)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_a59_travel_avoids_future_equipment",
+      "function": "Investigation",
+      "steps": "test_a59_travel_avoids_future_equipment (__main__.Investigation.test_a59_travel_avoids_future_equipment)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0005
+    },
+    {
+      "id": "test_a60_legacy_save_inside_npc_recovers",
+      "function": "Investigation",
+      "steps": "test_a60_legacy_save_inside_npc_recovers (__main__.Investigation.test_a60_legacy_save_inside_npc_recovers)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0016
+    },
+    {
+      "id": "test_a61_safe_door_never_opens_through_saved_position",
+      "function": "Investigation",
+      "steps": "test_a61_safe_door_never_opens_through_saved_position (__main__.Investigation.test_a61_safe_door_never_opens_through_saved_position)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0017
+    },
+    {
+      "id": "test_a62_flood_blocker_is_removed_with_repair",
+      "function": "Investigation",
+      "steps": "test_a62_flood_blocker_is_removed_with_repair (__main__.Investigation.test_a62_flood_blocker_is_removed_with_repair)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0014
+    },
+    {
+      "id": "test_a63_autosave_records_walked_position",
+      "function": "Investigation",
+      "steps": "test_a63_autosave_records_walked_position (__main__.Investigation.test_a63_autosave_records_walked_position)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
       "seconds": 0.0003
     },
     {
-      "id": "test_a59_travel_avoids_future_equipment",
+      "id": "test_a64_pause_records_position_and_remaining_time",
       "function": "Investigation",
-      "steps": "test_a59_travel_avoids_future_equipment",
+      "steps": "test_a64_pause_records_position_and_remaining_time (__main__.Investigation.test_a64_pause_records_position_and_remaining_time)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.006
+      "seconds": 0.0002
     },
     {
-      "id": "test_a60_legacy_save_inside_npc_recovers",
+      "id": "test_a65_autosave_rejects_invalid_positions",
       "function": "Investigation",
-      "steps": "test_a60_legacy_save_inside_npc_recovers",
+      "steps": "test_a65_autosave_rejects_invalid_positions (__main__.Investigation.test_a65_autosave_rejects_invalid_positions)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0054
+      "seconds": 0.0003
     },
     {
-      "id": "test_a61_safe_door_never_opens_through_saved_position",
+      "id": "test_a66_autosave_recovers_inside_equipment",
       "function": "Investigation",
-      "steps": "test_a61_safe_door_never_opens_through_saved_position",
+      "steps": "test_a66_autosave_recovers_inside_equipment (__main__.Investigation.test_a66_autosave_recovers_inside_equipment)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0055
+      "seconds": 0.0047
     },
     {
-      "id": "test_a62_flood_blocker_is_removed_with_repair",
+      "id": "test_a67_hint_disqualifies_precision_achievement",
       "function": "Investigation",
-      "steps": "test_a62_flood_blocker_is_removed_with_repair",
+      "steps": "test_a67_hint_disqualifies_precision_achievement (__main__.Investigation.test_a67_hint_disqualifies_precision_achievement)",
       "expected": "Все утверждения теста выполняются.",
       "actual": "Ожидаемые значения подтверждены.",
       "status": "Pass",
-      "seconds": 0.0086
+      "seconds": 0.0028
+    },
+    {
+      "id": "test_a68_decorative_objects_have_physical_footprints",
+      "function": "Investigation",
+      "steps": "test_a68_decorative_objects_have_physical_footprints (__main__.Investigation.test_a68_decorative_objects_have_physical_footprints)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0022
+    },
+    {
+      "id": "test_a69_story_interactions_remain_reachable",
+      "function": "Investigation",
+      "steps": "test_a69_story_interactions_remain_reachable (__main__.Investigation.test_a69_story_interactions_remain_reachable)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.3682
+    },
+    {
+      "id": "test_portal_preserves_existing_investigation",
+      "function": "Investigation",
+      "steps": "test_portal_preserves_existing_investigation (__main__.Investigation.test_portal_preserves_existing_investigation)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0005
+    },
+    {
+      "id": "test_portal_requires_fuse_and_physical_access",
+      "function": "Investigation",
+      "steps": "test_portal_requires_fuse_and_physical_access (__main__.Investigation.test_portal_requires_fuse_and_physical_access)",
+      "expected": "Все утверждения теста выполняются.",
+      "actual": "Ожидаемые значения подтверждены.",
+      "status": "Pass",
+      "seconds": 0.0005
     }
   ]
 }

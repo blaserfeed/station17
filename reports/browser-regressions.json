@@ -1,0 +1,22 @@
+{
+  "run_at": "2026-11-12T13:46:29.784Z",
+  "checks": [
+    {
+      "name": "Walking position survives pause and reload; paused time stays fixed",
+      "status": "Pass"
+    },
+    {
+      "name": "Escape pauses inside a dialog and resume restores that dialog",
+      "status": "Pass"
+    },
+    {
+      "name": "Normal reload sends a pause snapshot before leaving",
+      "status": "Pass"
+    },
+    {
+      "name": "WebGL error stays visible after server connection",
+      "status": "Pass"
+    }
+  ],
+  "pageErrors": []
+}

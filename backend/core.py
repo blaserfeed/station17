@@ -1,6 +1,6 @@
 """Сохраняемое расследование: каждая головоломка связывает разные эпохи."""
 import copy,math,uuid,time
-from .content import EPOCHS,BOUNDS,SPAWN,NPC,VALVE,SAFE,BEACON,DIAGNOSTICS,WALLS,FLOOD_WALL,BONUS_NOTES
+from .content import EPOCHS,BOUNDS,SPAWN,NPC,VALVE,SAFE,BEACON,DIAGNOSTICS,WALLS,FLOOD_WALL,BONUS_NOTES,PORTAL,PORTAL_CONSOLE,PORTAL_FUSE,PORTAL_EXIT
 from .collision import PLAYER_RADIUS, DOOR_ANGLE, LAYOUT, station_solids, clear_position
 class GameError(Exception):
  def __init__(self,message,status=400):self.message=message;self.status=status
@@ -16,7 +16,7 @@ def checkpoint(g):
  g['checkpoint']=None;g['checkpoint']=copy.deepcopy(g)
 
 def fresh():
- g=dict(timer={'limit':1500,'remaining':1500.0,'running':False,'started_at':None},failure_kind=None,story_version=4,run_id=uuid.uuid4().hex,attempt=0,stage=1,phase='explore',position=SPAWN[:],inventory=['radio'],found_by_epoch=[[],['radio'],[]],visits=[0,1,0],safe_open=False,repairs={'valve':False},warned=False,T=0,P=0,C=0,S=20,history=[],chat=[],effects=[],total_errors=0,total_hits=0,ending=None,failure=None,avatar='Idle',voice_actions=0,gesture_actions=0,hints=0)
+ g=dict(timer={'limit':1500,'remaining':1500.0,'running':False,'started_at':None},failure_kind=None,story_version=4,run_id=uuid.uuid4().hex,attempt=0,stage=1,phase='explore',position=SPAWN[:],inventory=['radio'],found_by_epoch=[[],['radio'],[]],visits=[0,1,0],safe_open=False,repairs={'valve':False},portal={'repaired':False,'target':None},warned=False,T=0,P=0,C=0,S=20,history=[],chat=[],effects=[],total_errors=0,total_hits=0,ending=None,failure=None,avatar='Idle',voice_actions=0,gesture_actions=0,hints=0)
  checkpoint(g);return g
 
 def notes(g):
@@ -34,27 +34,58 @@ def rescue_ready(g):
 def quality(g):
  return min(100,20+15*int('calibration' in g['inventory'])+30*int(g['repairs']['valve'])+35*int(rescue_ready(g)))
 
+def achievement(g):
+ return g['phase']=='results' and g['total_errors']==0 and g['hints']==0
+
+def save_position(g,data):
+ if 'position' in data:
+  p=proximity(data,[0,0],50)
+  g['position']=clear_position(p,station_solids(walls(g),g['stage'],g['safe_open']))
+
+def portal_state(g):
+ # Existing investigations that already used time travel retain access.
+ return g.get('portal', {'repaired':g['stage']!=1 or sum(g['visits'])>1 or g['repairs']['valve'],'target':None})
+
 def objective(g):
+ portal=portal_state(g)
+ if not portal['repaired']:
+  if 'portal_fuse' not in g['inventory']:
+   return dict(title='Найти предохранитель',text='Возьмите запасной предохранитель у портала в главном зале.',stage=1,room='Главный зал',target=PORTAL_FUSE)
+  return dict(title='Починить портал',text='Установите предохранитель в щиток справа от портала.',stage=1,room='Главный зал',target=PORTAL_CONSOLE)
  if not g['repairs']['valve']:
   if 'calibration' not in g['inventory']:
-   return dict(title='Прочитать отчёт',text='Нажмите R и перейдите в 2074 год. Отчёт лежит у клапана в западном крыле: нужна линия Б.',stage=2,room='Западное крыло',target=DIAGNOSTICS)
-  return dict(title='Открыть линию Б',text='Нажмите R и перейдите в 1978 год. У клапана выберите линию Б.',stage=0,room='Западное крыло',target=VALVE)
- if not rescue_ready(g):
-  return dict(title='Забрать запись отца',text='Снова зайдите в 2074 год. Вода ушла, катушка лежит в западном проходе.',stage=2,room='Музейный отсек',target=[-28,-5])
- return dict(title='Вернуть отца',text='Вернитесь в 2026 год к аварийному пульту у входа и выберите «Вернуть отца».',stage=1,room='У входа в главный зал',target=BEACON)
+   goal=dict(title='Прочитать отчёт',text='Отчёт лежит у клапана в западном крыле.',stage=2,room='Западное крыло',target=DIAGNOSTICS)
+  else:
+   goal=dict(title='Открыть линию Б',text='У клапана выберите резервную линию Б.',stage=0,room='Западное крыло',target=VALVE)
+ elif not rescue_ready(g):
+  goal=dict(title='Забрать запись отца',text='Вода ушла. Катушка лежит в западном проходе.',stage=2,room='Музейный отсек',target=[-28,-5])
+ else:
+  goal=dict(title='Вернуть отца',text='Подойдите к аварийному пульту и выберите «Вернуть отца».',stage=1,room='У входа в главный зал',target=BEACON)
+ if goal['stage']!=g['stage']:
+  year=EPOCHS[goal['stage']]['year']
+  goal.update(room='Портал в главном зале',target=PORTAL,text=f'Вернитесь к порталу. Откройте проход в {year} год и войдите в него.')
+ return goal
 
 def walls(g,stage=None):
  out=copy.deepcopy(WALLS);stage=g['stage'] if stage is None else stage
  if stage>0 and not g['repairs']['valve']:out.append(FLOOD_WALL[:])
  return out
 
-def travel(g,target,data=None):
- if g['phase']!='explore':raise GameError('Сначала завершите текущий экран результата.')
- if type(target) is not int or target not in (0,1,2):raise GameError('Выберите 1978, 2026 или 2074 год.')
- if target==g['stage']:raise GameError('Вы уже здесь.')
- p=proximity(data or {'position':g['position']},[0,0],50);old=g['stage']
- p=clear_position(p,station_solids(walls(g,target),target,g['safe_open']))
- g['stage']=target;g['position']=p;g['visits'][target]+=1;g['avatar']='Action';checkpoint(g)
+def travel(g,data):
+ portal=g['portal']
+ target=portal['target']
+ if not portal['repaired'] or target is None:
+  raise GameError('Сначала восстановите питание и откройте портал.')
+ p=proximity(data,PORTAL,1.1)
+ if abs(p[0]-PORTAL[0])>.9 or abs(p[1]-PORTAL[1])>.35:
+  raise GameError('Войдите в светящийся проход.')
+ old=g['stage']
+ g['stage']=target
+ g['position']=clear_position(PORTAL_EXIT,station_solids(walls(g,target),target,g['safe_open']))
+ g['visits'][target]+=1
+ g['avatar']='Action'
+ portal['target']=None
+ checkpoint(g)
  return g,dict(message=f"{EPOCHS[old]['year']} → {EPOCHS[target]['year']}. {EPOCHS[target]['name']}",sound='key',travel={'from':EPOCHS[old]['year'],'to':EPOCHS[target]['year']})
 
 def _digits(data,key,n,max_value=9):
@@ -82,27 +113,47 @@ def apply(game,kind,data,full=False,now=None):
  if kind=='new':return fresh(),dict(message='17:40. На служебной частоте звучит голос отца, пропавшего десять лет назад.',sound='key',intro=True)
  if not g:raise GameError('Начните новую игру.')
  if g.get('story_version')!=4:raise GameError('Расследование обновлено. Начните новую игру; прежнее сохранение оставлено в резервной копии.')
+ g.setdefault('portal',portal_state(g))
  if kind=='retry':
   if g['phase']!='over':raise GameError('Контрольная точка доступна после аварийного размыкания.')
   number=g['attempt']+1
   if g.get('failure_kind')=='timeout':
    run=g['run_id'];g=fresh();g['run_id']=run;g['attempt']=number;checkpoint(g)
    return g,dict(message='Новая попытка. До аварии 25 минут игрового времени.',sound=None,intro=True)
-  g=copy.deepcopy(g['checkpoint']);g['attempt']=number;clock_state(g).update(running=False,started_at=None);checkpoint(g)
+  g=copy.deepcopy(g['checkpoint']);g.setdefault('portal',portal_state(g));g['portal']['target']=None;g['attempt']=number;clock_state(g).update(running=False,started_at=None);checkpoint(g)
   return g,dict(message='Автоматика сохранила контур. Можно пересмотреть решение.',sound=None)
  if g['phase']!='explore':raise GameError('Прохождение завершено.')
  if advance_clock(g,now):return g,dict(message='Время вышло. Напорная линия разрушена.',sound=None,cinematic='flood')
  if kind=='clock':
   running=data.get('running')
   if type(running) is not bool:raise GameError('Некорректное состояние таймера.')
+  save_position(g,data)
   t=clock_state(g);t['running']=running;t['started_at']=now if running else None
   return g,event
- if kind=='tick':return g,event
+ if kind=='tick':
+  save_position(g,data)
+  return g,event
  source=data.get('source','keyboard')
  if source not in ('keyboard','mouse','voice','gesture'):raise GameError('Неизвестный источник ввода.')
  if source in ('voice','gesture'):g[source+'_actions']+=1
- if kind=='travel':return travel(g,data.get('target'),data)
- if kind=='collect':
+ if kind=='travel':return travel(g,data)
+ if kind=='portal_repair':
+  g['position']=proximity(data,PORTAL_CONSOLE)
+  if not g['portal']['repaired']:
+   if 'portal_fuse' not in g['inventory']:raise GameError('Возьмите запасной предохранитель у портала.')
+   g['portal']['repaired']=True
+   _record(g,'2026: питание портала восстановлено.')
+   checkpoint(g)
+  event.update(message='Питание восстановлено. Выберите эпоху на щитке.',sound='success')
+ elif kind=='portal_open':
+  g['position']=proximity(data,PORTAL_CONSOLE)
+  if not g['portal']['repaired']:raise GameError('Сначала восстановите питание портала.')
+  target=data.get('target')
+  if type(target) is not int or target not in range(len(EPOCHS)) or target==g['stage']:
+   raise GameError('Выберите другую эпоху.')
+  g['portal']['target']=target
+  event.update(message=f"Проход в {EPOCHS[target]['year']} год открыт. Войдите в портал.",sound='key')
+ elif kind=='collect':
   c=next((c for c in EPOCHS[g['stage']]['clues'] if c['id']==data.get('id')),None)
   if not c:raise GameError('В этой эпохе нет такого документа.')
   g['position']=proximity(data,c['pos'])
@@ -169,7 +220,8 @@ def apply(game,kind,data,full=False,now=None):
 
 def public_game(g,full):
  if not g or g.get('story_version')!=4:return None
- p={k:copy.deepcopy(v) for k,v in g.items() if k!='checkpoint'};p['timer']=copy.deepcopy(clock_state(g));p['C']=int('calibration' in g['inventory'])+int(g['repairs']['valve'])+int(rescue_ready(g));p['S']=quality(g) if g['phase']!='over' else 0;p['epoch']=copy.deepcopy(EPOCHS[g['stage']]);p['epoch']['hazards']=[];p['epoch']['terminals']=[];p['found']=g['found_by_epoch'][g['stage']];p['walls']=walls(g);p['bounds']=BOUNDS;p['npc_position']=NPC;p['valve_position']=VALVE;p['safe_position']=SAFE;p['beacon_position']=BEACON;p['flooded']=g['stage']>0 and not g['repairs']['valve'];p['notes']=notes(g);p['objective']=objective(g);p['can_finish']=g['stage']==1 and g['repairs']['valve'];p['can_return']=rescue_ready(g);p['achievement']=g['phase']=='results' and g['total_errors']==0 and g['hints']==0
+ p={k:copy.deepcopy(v) for k,v in g.items() if k!='checkpoint'};p['timer']=copy.deepcopy(clock_state(g));p['C']=int('calibration' in g['inventory'])+int(g['repairs']['valve'])+int(rescue_ready(g));p['S']=quality(g) if g['phase']!='over' else 0;p['epoch']=copy.deepcopy(EPOCHS[g['stage']]);p['epoch']['hazards']=[];p['epoch']['terminals']=[];p['found']=g['found_by_epoch'][g['stage']];p['walls']=walls(g);p['bounds']=BOUNDS;p['npc_position']=NPC;p['valve_position']=VALVE;p['safe_position']=SAFE;p['beacon_position']=BEACON;p['flooded']=g['stage']>0 and not g['repairs']['valve'];p['notes']=notes(g);p['objective']=objective(g);p['can_finish']=g['stage']==1 and g['repairs']['valve'];p['can_return']=rescue_ready(g);p['achievement']=achievement(g)
+ p['portal']={**portal_state(g),'position':PORTAL,'console':PORTAL_CONSOLE}
  p['solids']=station_solids(p['walls'],g['stage'],g['safe_open'])
  p['position']=clear_position(p['position'],p['solids'])
  p['player_radius']=PLAYER_RADIUS;p['safe_door_angle']=DOOR_ANGLE if g['safe_open'] else 0;p['layout']=LAYOUT

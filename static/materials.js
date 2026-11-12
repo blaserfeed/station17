@@ -67,12 +67,12 @@ function grain(ctx, rand, count, alpha) {
 function paintPlaster(stage) {
   const c = canvas();
   const ctx = c.getContext('2d');
-  const base = ['#d8c4a0', '#c3ccd0', '#d7e6e2'][stage];
+  const base = ['#c4b595', '#9faaa8', '#c5d6d1'][stage];
   ctx.fillStyle = base;
   ctx.fillRect(0, 0, 512, 512);
   const rand = rng(210 + stage * 17);
-  grain(ctx, rand, 7000, .22);
-  ctx.strokeStyle = stage === 1 ? 'rgba(40,48,52,.45)' : 'rgba(70,60,40,.28)';
+  grain(ctx, rand, stage===2?2200:5000, stage===2?.09:.15);
+  ctx.strokeStyle = stage === 1 ? 'rgba(40,48,52,.22)' : 'rgba(70,60,40,.16)';
   ctx.lineWidth = 3;
   for (let x = 0; x <= 512; x += 128) {
     ctx.beginPath();
@@ -104,22 +104,6 @@ function paintPlaster(stage) {
   for (let x = 16; x < 512; x += 32) {
     for (const y of [176, 200]) h.fillRect(x, y, 5, 5);
   }
-  if (stage === 1) {
-    ctx.fillStyle = 'rgba(55,62,58,.28)';
-    ctx.beginPath();
-    ctx.ellipse(180, 360, 90, 40, .4, 0, Math.PI * 2);
-    ctx.fill();
-    h.strokeStyle = '#2a2a2a';
-    h.beginPath();
-    h.moveTo(240, 80);
-    h.lineTo(300, 210);
-    h.lineTo(270, 340);
-    h.stroke();
-  }
-  if (stage === 2) {
-    ctx.fillStyle = 'rgba(90,140,130,.16)';
-    for (let i = 0; i < 18; i++) ctx.fillRect(rand() * 512, 420 + rand() * 80, 18, 8);
-  }
   const rough = canvas();
   const r = rough.getContext('2d');
   r.fillStyle = stage === 1 ? '#9a9a9a' : '#b5b5b5';
@@ -131,7 +115,7 @@ function paintPlaster(stage) {
 function paintFloor(stage) {
   const c = canvas();
   const ctx = c.getContext('2d');
-  ctx.fillStyle = ['#cbb89a', '#aeb8b6', '#d5e2de'][stage];
+  ctx.fillStyle = ['#ab9f85', '#899994', '#b5c6c4'][stage];
   ctx.fillRect(0, 0, 512, 512);
   const rand = rng(88 + stage);
   for (let y = 0; y < 512; y += 128) {
@@ -142,7 +126,7 @@ function paintFloor(stage) {
     }
   }
   ctx.strokeStyle = stage === 0 ? '#8d7354' : '#7d8c8a';
-  ctx.lineWidth = 4;
+  ctx.lineWidth = 2;
   for (let i = 0; i <= 512; i += 128) {
     ctx.beginPath();
     ctx.moveTo(0, i);
@@ -151,16 +135,7 @@ function paintFloor(stage) {
     ctx.lineTo(i, 512);
     ctx.stroke();
   }
-  grain(ctx, rand, 4000, .16);
-  if (stage === 1) {
-    ctx.fillStyle = 'rgba(40,70,78,.34)';
-    ctx.beginPath();
-    ctx.ellipse(140, 300, 70, 36, .2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(360, 120, 50, 24, -.4, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  grain(ctx, rand, 1800, .08);
   const height = canvas();
   const h = height.getContext('2d');
   h.fillStyle = '#9a9a9a';
@@ -177,7 +152,7 @@ function paintFloor(stage) {
   }
   const rough = canvas();
   rough.getContext('2d').drawImage(height, 0, 0);
-  return {color: c, height, rough, metalness: .02, normalScale: 1};
+  return {color: c, height, rough, metalness: .02, normalScale: .6};
 }
 
 function paintEarth(stage) {
@@ -335,6 +310,7 @@ export function surfaceMaterial(kind, stage, repeat = [4, 4], quality = 1) {
     material.bumpMap = stamp(maps.bump, repeat);
     material.bumpScale = kind === 'steel' ? .02 : .045;
   }
+  if(kind==='plaster'||kind==='floor')material.userData.tileMeters=4;
   return material;
 }
 

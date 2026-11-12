@@ -54,3 +54,10 @@ body.finale header, body.finale footer, body.finale #veil, body.finale #hud, bod
 
 select{font:inherit;background:#fffef6;color:#233c48;border:1px solid #c8d3cd;border-radius:5px;padding:8px 12px;min-height:44px;width:100%}
 
+
+#finale-scene.reunion { align-items: end; background: linear-gradient(0deg,#08141ce8,transparent 34%); }
+#finale-scene.reunion .finale-card { position: relative; z-index: 1; max-width: 32em; padding: 0 24px 5vh; }
+#finale-scene.reunion .finale-card span { margin-bottom: 8px; }
+#finale-scene.reunion .finale-card p { font-size: clamp(19px,3vw,34px); }
+
+body.finale #voice-status, body.finale #camera-panel, body.finale #toast { display: none; }

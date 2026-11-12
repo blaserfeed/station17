@@ -1,0 +1,59 @@
+{
+  "status": "Pass",
+  "input": "Synthetic camera with an official hand photograph and mirrored copy; real MediaPipe inference",
+  "inference": {
+    "type": "result",
+    "label": "Thumb_Up",
+    "score": 0.743505597114563,
+    "hands": [
+      {
+        "label": "Thumb_Up",
+        "score": 0.743505597114563,
+        "handedness": "Left",
+        "handednessScore": 0.9817793369293213
+      },
+      {
+        "label": "Thumb_Up",
+        "score": 0.7466465830802917,
+        "handedness": "Right",
+        "handednessScore": 0.928557276725769
+      }
+    ]
+  },
+  "before": {
+    "position": [
+      -8,
+      21
+    ],
+    "pitch": 0.2
+  },
+  "after": {
+    "position": [
+      -8.215,
+      1.486
+    ],
+    "pitch": -0.6499999999999999,
+    "look": {
+      "x": 0,
+      "y": -1
+    },
+    "motion": {
+      "x": 0,
+      "z": -1,
+      "source": "gesture"
+    }
+  },
+  "stopped": {
+    "look": {
+      "x": 0,
+      "y": 0
+    },
+    "motion": {
+      "x": 0,
+      "z": 0,
+      "source": "keyboard"
+    }
+  },
+  "tracksEnded": true,
+  "pageErrors": []
+}

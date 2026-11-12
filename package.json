@@ -5,7 +5,15 @@
   "description": "Optional browser verification; Python server has no external dependencies",
   "scripts": {
     "test:browser": "node tests/browser_walkthrough.cjs",
-    "test:controls": "node tests/test_controls.mjs"
+    "test:controls": "node tests/test_controls.mjs",
+    "test": "python3 tests/test_game.py && npm run test:controls && npm run test:clock && npm run test:locomotion",
+    "test:clock": "node tests/test_clock.mjs",
+    "test:regressions": "node tests/browser_regressions.cjs",
+    "test:voice": "node tests/voice_probe.cjs && node tests/voice_browser.cjs",
+    "test:gestures": "node tests/two_hands.cjs",
+    "test:locomotion": "node tests/test_locomotion.mjs && node tests/test_gait_timing.mjs && node tests/test_batching.mjs",
+    "test:animation": "node tests/animation_probe.cjs && node tests/cadence_jump_probe.cjs && node tests/locomotion_browser.cjs",
+    "test:environment": "node tests/environment_audit.cjs"
   },
   "devDependencies": {
     "playwright": "1.62.1"

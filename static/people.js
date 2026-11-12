@@ -1,11 +1,11 @@
 import * as THREE from './vendor/three.module.js';
 import { GLTFLoader } from './vendor/GLTFLoader.js';
+import {WALK_SPEED,RUN_SPEED,WALK_CYCLE,RUN_CYCLE,gaitAdvance,CLIP_FOOTFALLS} from './locomotion.js';
+export {WALK_SPEED,RUN_SPEED} from './locomotion.js';
 
 const loader = new GLTFLoader();
 const groundedBlend = 14;
 export const JUMP = {takeoff: .15, land: .66, end: .90};
-export const WALK_SPEED = 2.15;
-export const RUN_SPEED = 4.6;
 
 function jumpClipTime(t) {
   // Calibrate the captured crouch, flight and recovery to the physics step.
@@ -139,8 +139,6 @@ const _boneZ = new THREE.Vector3();
 const _boneX = new THREE.Vector3();
 const _twist = new THREE.Vector3();
 const _basis = new THREE.Matrix4();
-const _spineYaw = new THREE.Quaternion();
-const _up = new THREE.Vector3(0, 1, 0);
 const _hip = new THREE.Vector3();
 const _ankle = new THREE.Vector3();
 const _knee = new THREE.Vector3();
@@ -154,7 +152,6 @@ const _delta = new THREE.Quaternion();
 const _standWorld = new THREE.Quaternion();
 const _newWorld = new THREE.Quaternion();
 const _axis = new THREE.Vector3();
-const STANCE = 0.62;
 
 // Bone local +Y runs to the child. Point it along dirWorld and keep local +Z near twistWorld,
 // so the arm can swing without inheriting the clip's phone-grip twist.
@@ -180,58 +177,36 @@ function toWorld(sceneQ, x, y, z, out) {
 }
 
 // Hang the arms, then swing them opposite the leading foot.
-// The forearm lags the shoulder, so the elbow leads and the hand stays relaxed.
-function naturalArms(scene, upperSwing, foreSwing, influence, rest) {
+// Elbows flex forward in the arm swing plane; wrists retain the captured pose.
+function naturalArms(scene, upperSwing, influence, rest, running = 0, stand = null) {
   if (influence < 0.02) return;
   scene.updateWorldMatrix(true, true);
   scene.getWorldQuaternion(_sceneQ);
-  const spine = scene.getObjectByName('spine_01');
-  if (spine) {
-    _spineYaw.setFromAxisAngle(_up, -upperSwing * 0.18);
-    spine.quaternion.multiply(_spineYaw);
-    spine.updateMatrixWorld(true);
-  }
-  const dir = new THREE.Vector3();
-  const twist = new THREE.Vector3();
-  const pose = (bone, dx, dy, dz, tx, ty, tz) => {
-    toWorld(_sceneQ, dx, dy, dz, dir);
-    toWorld(_sceneQ, tx, ty, tz, twist);
-    aimLimb(bone, dir, twist, influence);
+  const dir = new THREE.Vector3(),twist = new THREE.Vector3();
+  const pose = (name, x, y, z) => {
+    const bone=scene.getObjectByName(name);
+    toWorld(_sceneQ,x,y,z,dir);
+    if(stand?.bones[name]&&stand?.arms){
+      const side=name.endsWith('_l')?'l':'r',part=name.startsWith('upperarm')?'upperDir':'lowerDir';
+      aimFromStand(bone,stand.bones[name],stand.arms[side][part],dir,_sceneQ,influence);
+    }else{
+      toWorld(_sceneQ,0,0,1,twist);aimLimb(bone,dir,twist,influence);
+    }
   };
-  pose(scene.getObjectByName('upperarm_l'), 0.16, -1, upperSwing * 0.84, 0, 0.2, 1);
-  pose(scene.getObjectByName('upperarm_r'), -0.16, -1, -upperSwing * 0.84, 0, 0.2, 1);
-  pose(scene.getObjectByName('lowerarm_l'), 0.05, -1, foreSwing * 0.2, 0, 0.15, 1);
-  pose(scene.getObjectByName('lowerarm_r'), -0.05, -1, -foreSwing * 0.2, 0, 0.15, 1);
-  pose(scene.getObjectByName('hand_l'), 0.02, -1, foreSwing * 0.12, -1, 0.05, 0.15);
-  pose(scene.getObjectByName('hand_r'), -0.02, -1, -foreSwing * 0.12, 1, 0.05, 0.15);
-  if (!rest) return;
-  scene.traverse(bone => {
-    if (!bone.isBone || !/index|middle|thumb|ring|pinky/i.test(bone.name)) return;
-    const bind = rest.get(bone.name);
-    if (bind) bone.quaternion.slerp(bind, influence);
-  });
-}
-
-// One foot's path through a full cycle. t=0 is heel strike, then flat, toe-off, swing.
-function footStep(t, travel, lift) {
-  t = ((t % 1) + 1) % 1;
-  const front = travel * 0.42;
-  const back = -travel * 0.58;
-  if (t < STANCE) {
-    const u = t / STANCE;
-    const z = front + (back - front) * u;
-    let y = 0;
-    if (u > 0.78) y = ((u - 0.78) / 0.22) * lift * 0.4;
-    let pitch = 0.45 * (1 - Math.min(1, u / 0.14));
-    if (u > 0.7) pitch = -0.8 * ((u - 0.7) / 0.3);
-    return {z, y, pitch};
+  const amplitude=THREE.MathUtils.lerp(.45,.70,running);
+  const flex=THREE.MathUtils.lerp(.12,.95,running);
+  for(const [side,sign] of [['l',1],['r',-1]]){
+    const shoulder=upperSwing*amplitude*sign;
+    const elbow=shoulder+flex;
+    pose('upperarm_'+side,sign*.10,-Math.cos(shoulder),Math.sin(shoulder));
+    pose('lowerarm_'+side,sign*.025,-Math.cos(elbow),Math.sin(elbow));
+    // Keep the wrist aligned with its forearm instead of aiming the hand in
+    // world space, which used to twist it as the elbow moved.
+    const hand=scene.getObjectByName('hand_'+side),neutral=rest?.get('hand_'+side);
+    if(hand&&neutral){const angle=hand.quaternion.angleTo(neutral),limit=.18;if(angle>limit)hand.quaternion.slerp(neutral,(1-limit/angle)*influence);}
   }
-  const u = (t - STANCE) / (1 - STANCE);
-  const s = u * u * (3 - 2 * u);
-  const z = back + (front - back) * s;
-  const y = Math.sin(u * Math.PI) * lift;
-  const pitch = THREE.MathUtils.lerp(-0.65, 0.48, s);
-  return {z, y, pitch};
+  // Finger motion stays in the captured clip; restoring the bind pose here
+  // used to flatten the fingers into a rigid, open hand.
 }
 
 function solveKnee(hip, ankle, upper, lower, pole, out) {
@@ -329,61 +304,25 @@ function closedStance(scene, stand) {
   placeLeg(scene, 'r', {z: 0, y: 0, pitch: 0.08}, 1, stand, _sceneQ);
 }
 
-// The captured walk is a crouch with locked ankles. Build a heel-toe gait from the standing pose.
-function scaledStep(step, posed) {
-  return {z: step.z * posed, y: step.y * posed, pitch: step.pitch * posed + 0.08 * (1 - posed)};
-}
-
-function humanGait(scene, cycle, influence, stand, travel, lift) {
-  if (!stand) return;
-  const pelvis = scene.getObjectByName('pelvis');
-  if (influence >= 0.02 && pelvis && stand.pelvis) {
-    const bob = 0.016 * Math.abs(Math.sin(cycle * Math.PI * 2));
-    const sway = Math.sin(cycle * Math.PI * 2) * 0.02;
-    pelvis.position.z = THREE.MathUtils.lerp(pelvis.position.z, stand.pelvis.z - bob, influence);
-    pelvis.position.x = THREE.MathUtils.lerp(pelvis.position.x, stand.pelvis.x + sway, influence);
+function attachFeet(scene, stand) {
+  if(!stand)return;
+  scene.updateWorldMatrix(true,true);
+  for(const side of ['l','r']){
+    const calf=scene.getObjectByName('calf_'+side),foot=scene.getObjectByName('foot_'+side);
+    const offset=stand.legs[side]?.ankleFromCalf;
+    if(!calf||!foot?.parent||!offset)continue;
+    // The imported foot is parented to the rig root, not to the calf.
+    // Follow the actual calf endpoint after every blended pose, including jump.
+    _ankle.copy(offset);calf.localToWorld(_ankle);
+    foot.parent.worldToLocal(_ankle);foot.position.copy(_ankle);foot.updateMatrixWorld(true);
   }
-  if (influence >= 0.02) {
-    for (const name of ['spine_01', 'spine_02', 'neck_01', 'head']) {
-      const bone = scene.getObjectByName(name);
-      const captured = stand.bones[name];
-      if (bone && captured) bone.quaternion.slerp(captured.local, influence * 0.9);
-    }
-  }
-  scene.updateWorldMatrix(true, true);
-  const stanceTravel = travel * STANCE;
-  let drop = 0;
-  for (const [side, t] of [['l', cycle], ['r', cycle + 0.5]]) {
-    const spec = stand.legs[side];
-    const thigh = scene.getObjectByName(`thigh_${side}`);
-    if (!spec || !thigh) continue;
-    const step = footStep(t, stanceTravel, lift);
-    thigh.getWorldPosition(_hip);
-    _ankle.set((side === 'l' ? 1 : -1) * stance(spec).x, spec.footY + step.y, step.z);
-    scene.localToWorld(_ankle);
-    const horiz = Math.hypot(_ankle.x - _hip.x, _ankle.z - _hip.z);
-    const reach = (spec.upper + spec.lower) * 0.98;
-    const vertical = Math.sqrt(Math.max(0, reach * reach - horiz * horiz));
-    drop = Math.max(drop, _hip.y - (_ankle.y + vertical));
-  }
-  drop = Math.min(drop, 0.06) * Math.min(1, influence * 2.2);
-  if (pelvis && drop > 0.001) {
-    pelvis.parent.getWorldScale(_span);
-    pelvis.position.z -= drop / (_span.x || 1);
-    pelvis.updateMatrixWorld(true);
-  }
-  scene.updateWorldMatrix(true, true);
-  scene.getWorldQuaternion(_sceneQ);
-  const posed = Math.min(1, influence * 2.2);
-  placeLeg(scene, 'l', scaledStep(footStep(cycle, stanceTravel, lift), posed), 1, stand, _sceneQ);
-  placeLeg(scene, 'r', scaledStep(footStep(cycle + 0.5, stanceTravel, lift), posed), 1, stand, _sceneQ);
 }
 
 function captureStand(scene) {
   scene.updateMatrixWorld(true);
   const bones = {};
   const worldQ = new THREE.Quaternion();
-  for (const name of ['spine_01', 'spine_02', 'neck_01', 'head', 'thigh_l', 'calf_l', 'foot_l', 'thigh_r', 'calf_r', 'foot_r']) {
+  for (const name of ['spine_01', 'spine_02', 'neck_01', 'head', 'thigh_l', 'calf_l', 'foot_l', 'thigh_r', 'calf_r', 'foot_r', 'upperarm_l', 'lowerarm_l', 'hand_l', 'upperarm_r', 'lowerarm_r', 'hand_r']) {
     const bone = scene.getObjectByName(name);
     if (!bone) continue;
     bone.getWorldQuaternion(worldQ);
@@ -405,14 +344,21 @@ function captureStand(scene) {
     legs[side] = {
       upper: hip.distanceTo(knee),
       lower: knee.distanceTo(ankle),
+      ankleFromCalf: calf.worldToLocal(ankle.clone()),
       footX: local.x,
       footY: local.y,
       thighDir: knee.clone().sub(hip).normalize(),
       calfDir: ankle.clone().sub(knee).normalize(),
     };
   }
+  const arms={};
+  for(const side of ['l','r']){
+    const shoulder=scene.getObjectByName('upperarm_'+side),elbow=scene.getObjectByName('lowerarm_'+side),wrist=scene.getObjectByName('hand_'+side);
+    shoulder.getWorldPosition(hip);elbow.getWorldPosition(knee);wrist.getWorldPosition(ankle);
+    arms[side]={upperDir:knee.clone().sub(hip).normalize(),lowerDir:ankle.clone().sub(knee).normalize()};
+  }
   const pelvis = scene.getObjectByName('pelvis');
-  return {bones, legs, pelvis: pelvis ? pelvis.position.clone() : null};
+  return {bones, legs, arms, pelvis: pelvis ? pelvis.position.clone() : null};
 }
 
 export function makeJumpClip(scene) {
@@ -461,7 +407,8 @@ export function makeJumpClip(scene) {
     const values = [];
     for (let i = 0; i < times.length; i++) {
       const dy = curves.pelvisY(times[i]);
-      values.push(base.x, base.y + dy, base.z);
+      // This imported rig uses local Z as its vertical axis.
+      values.push(base.x, base.y, base.z + dy);
     }
     const track = new THREE.VectorKeyframeTrack('pelvis.position', times, values);
     track.setInterpolation(THREE.InterpolateSmooth);
@@ -577,11 +524,15 @@ function polishLook(scene, name) {
         m.color.setHex(0x2a3138);
         m.roughness = 0.7;
       } else if (/original top/i.test(label)) {
-        m.color.setHex(0x2e4252);
+        m.color.setHex(name === 'oleg' ? 0x8f7757 : 0x2e4252);
         m.roughness = 0.58;
       } else if (/original bottom/i.test(label)) {
-        m.color.setHex(0x1b2836);
+        m.color.setHex(name === 'oleg' ? 0x575044 : 0x1b2836);
         m.roughness = 0.64;
+      }
+      if(name==='oleg'&&/body\.short01|hair roots/i.test(label)){
+        m.color.setHex(0xb3b0a7);
+        m.roughness=.7;
       }
       if (/eye/i.test(label)) { m.roughness = 0.16; m.envMapIntensity = 0.55; }
       else if (m.envMapIntensity === undefined || m.envMapIntensity === 1) m.envMapIntensity = 0.4;
@@ -592,7 +543,9 @@ function polishLook(scene, name) {
 export function person(name) {
   const root = new THREE.Group();
   root.name = name;
-  root.userData.ready = loader.loadAsync(new URL(`./assets/${name}.glb`, import.meta.url).href)
+  const asset=name==='oleg'?'sergey':name;
+  if(name==='oleg')root.scale.setScalar(1.045);
+  root.userData.ready = loader.loadAsync(new URL(`./assets/${asset}.glb`, import.meta.url).href)
     .then(({scene, animations}) => {
       scene.traverse(part => {
         if (/phone|accessory|held/i.test(part.name)) part.visible = false;
@@ -646,6 +599,21 @@ export function person(name) {
   return root;
 }
 
+export function animateArrival(root,dt,progress) {
+  animatePerson(root,dt);
+  const rig=root.userData.rig;
+  if(!rig||progress<=0||progress>=1)return;
+  const phase=progress*2;
+  const strength=Math.sin(progress*Math.PI);
+  const swing=Math.sin(phase*Math.PI*2)*strength;
+  const scene=rig.scene;
+  scene.getWorldQuaternion(_sceneQ);
+  placeLeg(scene,'l',{z:swing*.21,y:Math.max(0,-swing)*.1,pitch:.08},1,rig.stand,_sceneQ);
+  placeLeg(scene,'r',{z:-swing*.21,y:Math.max(0,swing)*.1,pitch:.08},1,rig.stand,_sceneQ);
+  attachFeet(scene,rig.stand);
+  naturalArms(scene,-swing*.45,1,rig.rest,0,rig.stand);
+}
+
 export function animatePerson(root, dt, distance = 0, jumpAge = null) {
   const rig = root.userData.rig;
   if (!rig) return;
@@ -653,8 +621,9 @@ export function animatePerson(root, dt, distance = 0, jumpAge = null) {
   const walk = rig.actions.get('Walk');
   if (!walk) {
     rig.mixer.update(dt);
-    naturalArms(rig.scene, 0, 0, 1, rig.rest);
+    naturalArms(rig.scene, 0, 1, rig.rest, 0, rig.stand);
     closedStance(rig.scene, rig.stand);
+    attachFeet(rig.scene, rig.stand);
     if (rig.idleOffset != null) rig.scene.position.y = rig.idleOffset + Math.sin(performance.now() * 0.0016) * 0.006;
     return;
   }
@@ -668,18 +637,16 @@ export function animatePerson(root, dt, distance = 0, jumpAge = null) {
   rig.movement = THREE.MathUtils.damp(rig.movement, moving, groundedBlend, dt);
   
   // Run speed sits above the walk; the band matches WALK_SPEED and RUN_SPEED.
-  const runTarget = THREE.MathUtils.smoothstep(rig.smoothedSpeed, 2.6, 3.8);
+  const runTarget = THREE.MathUtils.smoothstep(rig.smoothedSpeed, WALK_SPEED+.35, RUN_SPEED-.6);
   rig.running = THREE.MathUtils.damp(rig.running, runTarget, 10, dt);
   rig.jumping = THREE.MathUtils.damp(rig.jumping, jumpAge === null ? 0 : 1, 21, dt);
 
-  // One phase is two steps. The distance matches the planted foot so it does not skate.
-  const cycleLen = THREE.MathUtils.lerp(1.32, 2.05, rig.running);
-  if (distance > 0.0005) {
-    rig.phase = (rig.phase + distance / cycleLen) % 1;
-  } else if (rig.movement > 0.06) {
-    const stepDecel = rig.movement * 1.15;
-    rig.phase = (rig.phase + (stepDecel * dt) / cycleLen) % 1;
-  }
+  // Phase spans the entire source clip: four footfalls, not a single stride.
+  const cycleLen = THREE.MathUtils.lerp(WALK_CYCLE, RUN_CYCLE, rig.running);
+  const advance=gaitAdvance(dt,distance,rig.running,walk.getClip().duration,run.getClip().duration);
+  rig.footfalls=jumpAge===null&&rig.jumping<.1
+    ?Math.floor((rig.phase+advance)*CLIP_FOOTFALLS)-Math.floor(rig.phase*CLIP_FOOTFALLS):0;
+  rig.phase=(rig.phase+advance)%1;
 
   const grounded = 1 - rig.jumping;
   const walkPhase = rig.phase;
@@ -706,15 +673,20 @@ export function animatePerson(root, dt, distance = 0, jumpAge = null) {
   
   rig.scene.position.y = THREE.MathUtils.damp(rig.scene.position.y, rig.idleOffset, 12, dt);
   rig.mixer.update(dt);
+  attachFeet(rig.scene,rig.stand);
   const gait = rig.movement * (1 - rig.jumping);
-  const lift = THREE.MathUtils.lerp(0.11, 0.2, rig.running);
-  if (rig.jumping < 0.25) humanGait(rig.scene, rig.phase, gait, rig.stand, cycleLen, lift);
-  // Left heel strikes at phase 0, so the left arm is back. The forearm lags.
-  const armPhase = rig.phase * Math.PI * 2;
-  const amp = THREE.MathUtils.lerp(1, 1.25, rig.running) * rig.movement;
-  const upperSwing = -Math.cos(armPhase) * amp;
-  const foreSwing = -Math.cos(armPhase - 0.5) * amp;
-  naturalArms(rig.scene, upperSwing, foreSwing, 1 - rig.jumping * 0.85, rig.rest);
+  // Preserve the captured leg motion. The old procedural stride pulled the
+  // independently rigged shoes beyond the knees' reach, especially in a run.
+  // Drive the opposite arm from the actual foot poses, not an assumed clip
+  // phase: the captured walk and run do not start with the same leading leg.
+  rig.scene.updateWorldMatrix(true,true);rig.scene.getWorldQuaternion(_sceneQ);
+  const left=rig.scene.getObjectByName('foot_l'),right=rig.scene.getObjectByName('foot_r');
+  left.getWorldPosition(_ankle);right.getWorldPosition(_knee);
+  _dir.set(0,0,1).applyQuaternion(_sceneQ);
+  const difference=_knee.sub(_ankle).dot(_dir);
+  const target=THREE.MathUtils.clamp(difference/(cycleLen*.42),-1,1)*rig.movement;
+  rig.armSwing=target;
+  naturalArms(rig.scene,rig.armSwing,1-rig.jumping*.85,rig.rest,rig.running,rig.stand);
   if (gait < 0.15 && rig.jumping < 0.05) rig.scene.position.y = rig.idleOffset + Math.sin(performance.now() * 0.0016) * 0.006;
 }
 

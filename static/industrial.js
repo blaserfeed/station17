@@ -310,39 +310,43 @@ export function rotorBlade(parent, angle, material) {
   return add(parent, geometry, material, [0, 0, 0]);
 }
 
-export function dressing(parent, era) {
+export function dressing(parent, era, layout = {}) {
   const steel = metal(0x8a9692, .4);
   const wood = metal(era === 0 ? 0x8b6842 : era === 2 ? 0x6a7c78 : 0x746456, .7);
-  const cream = metal(0xe7d7b0, .62);
   const shade = metal(era === 2 ? 0xb7ddd8 : 0xd9c7a4, .55);
   const extinguisher = (x, z, yaw) => {
     const p = groupAt(parent, [x, 0, z]);
+    p.name = 'extinguisher';
     p.rotation.y = yaw;
     cylinder(p, .11, .62, [0, .48, 0], metal(0x9c4034, .48), .11, 12);
     cylinder(p, .13, .06, [0, .16, 0], steel, .13, 12);
     cylinder(p, .045, .08, [0, .82, 0], steel, .05, 10);
     pipe(p, [[0, .84, 0], [.12, .92, 0], [.12, .98, .02]], .02, steel, .04);
   };
-  for (const spot of [[-10.15, -23.4, .35], [10.15, 23.3, 2.7], [-10.2, 5.6, -.15], [10.15, -7.4, 2.9]]) extinguisher(...spot);
+  for (const spot of layout.extinguishers || [[-10.15, -23.4, .35], [10.15, 23.3, 2.7], [-10.2, 5.6, -.15], [10.15, -7.4, 2.9]]) extinguisher(...spot);
   const crates = (x, z, yaw) => {
     const p = groupAt(parent, [x, 0, z]);
+    p.name = 'storage-crates';
     p.rotation.y = yaw;
     casing(p, [.72, .48, .56], [0, .24, 0], wood, .03);
     casing(p, [.48, .34, .4], [.06, .64, .02], wood, .02);
   };
-  crates(9.2, 15.4, .35);
-  crates(-9.1, -16.6, -.25);
-  crates(8.7, -19.6, .2);
-  for (const [x, z] of [[20, -21.15], [26.2, -21.15], [-16.4, 16.2]]) {
+  for (const spot of layout.crates || [[9.2, 15.4, .35], [-9.1, -16.6, -.25], [8.7, -19.6, .2]]) crates(...spot);
+  for (const [x, z] of layout.barrels || [[20, -21.15], [26.2, -21.15], [-16.4, 16.2]]) {
     const p = groupAt(parent, [x, 0, z]);
+    p.name = 'barrel';
     cylinder(p, .32, .68, [0, .34, 0], steel, .32, 16);
     cylinder(p, .345, .045, [0, .18, 0], metal(0x5c6c66, .46), .345, 16);
     cylinder(p, .345, .045, [0, .52, 0], metal(0x5c6c66, .46), .345, 16);
   }
-  reel(parent, [-33.5, .4, 15.4], steel, metal(0x3c4a46));
-  reel(parent, [33.2, .4, -6.2], steel, metal(0x6a5340));
-  for (const [x, z, yaw] of [[6.5, 8.4, .45], [-6.3, -8.6, -.35]]) {
+  for (const [x, z] of layout.reel_stands || [[-33.5, 15.4], [33.2, -6.2]]) {
+    const stand = groupAt(parent, [x, 0, z]);stand.name = 'reel-stand';
+    casing(stand, [.75, .4, .65], [0, .2, 0], wood, .025);
+    reel(stand, [0, .445, 0], steel, metal(0x6a5340));
+  }
+  for (const [x, z, yaw] of layout.signs || [[6.5, 8.4, .45], [-6.3, -8.6, -.35]]) {
     const p = groupAt(parent, [x, 0, z]);
+    p.name = 'floor-sign';
     p.rotation.y = yaw;
     casing(p, [.42, .58, .035], [0, .4, 0], metal(0xd08a32, .58), .012);
     cylinder(p, .022, .62, [-.14, .32, .06], steel, .022, 6);
@@ -360,14 +364,27 @@ export function dressing(parent, era) {
     p.add(lamp);
   }
   const clock = groupAt(parent, [6.4, 3.25, 26.68]);
-  cylinder(clock, .38, .07, [0, 0, 0], steel, .38, 20);
-  cylinder(clock, .3, .035, [0, 0, .04], cream, .3, 20);
-  pipe(clock, [[0, 0, .07], [0, .16, .07]], .012, metal(0x243038, .4), .01);
+  clock.name = 'station-clock';clock.rotation.y = Math.PI;
+  cylinder(clock, .38, .08, [0, 0, 0], steel, .38, 32).rotation.x = Math.PI / 2;
+  const dial = document.createElement('canvas');dial.width=dial.height=256;
+  const ctx = dial.getContext('2d');ctx.fillStyle='#e7dfc8';ctx.fillRect(0,0,256,256);
+  ctx.strokeStyle='#30463f';ctx.lineWidth=3;
+  for(let i=0;i<60;i++){
+    const a=i*Math.PI/30,r=i%5?110:103;
+    ctx.beginPath();ctx.moveTo(128+Math.sin(a)*r,128-Math.cos(a)*r);ctx.lineTo(128+Math.sin(a)*116,128-Math.cos(a)*116);ctx.stroke();
+  }
+  ctx.font='600 30px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#30463f';
+  for(const [text,x,y] of [['12',128,46],['3',210,128],['6',128,210],['9',46,128]])ctx.fillText(text,x,y);
+  const map=new THREE.CanvasTexture(dial);map.colorSpace=THREE.SRGBColorSpace;
+  add(clock,new THREE.CircleGeometry(.335,40),new THREE.MeshBasicMaterial({map}),[0,0,.044]).castShadow=false;
+  for(const [length,width,angle] of [[.18,.025,-(5+40/60)*Math.PI/6],[.27,.017,-40*Math.PI/30]]){
+    const pivot=groupAt(clock,[0,0,.053]);pivot.rotation.z=angle;
+    add(pivot,new THREE.BoxGeometry(width,length,.012),metal(0x243b35,.7),[0,length/2,0]);
+  }
   pipe(parent, [[-8, 3.2, -21], [-8, 3.2, 21]], .032, steel, .25);
   pipe(parent, [[8, 3.2, -21], [8, 3.2, 21]], .032, steel, .25);
   if (era !== 2) {
-    plant(parent, 33.1, 20.2, era + 2);
-    plant(parent, -33.2, -23.4, era + 4);
+    for(const [i,[x,z]] of (layout.plants || [[33.1,20.2],[-33.2,-23.4]]).entries())plant(parent,x,z,era+2+i*2);
   }
 }
 

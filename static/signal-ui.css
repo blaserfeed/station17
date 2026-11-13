@@ -1,0 +1,87 @@
+:root {
+  color-scheme: dark;
+  --signal-ink: #eae8dd;
+  --signal-muted: #adb6b4;
+  --signal-panel: #141c20;
+  --signal-line: #455150;
+  --signal-accent: #f3bb64;
+  --paper: var(--signal-panel);
+  --ink: var(--signal-ink);
+  --muted: var(--signal-muted);
+  --line: var(--signal-line);
+}
+body { color: var(--signal-ink); font-family: system-ui,sans-serif; background: #10171a; }
+body:not(.playing) #veil { background: linear-gradient(90deg,#101619 2%,#101619eb 27%,#10161971 63%,transparent); }
+body.playing #veil { opacity: 0; }
+header { inset: 16px 22px auto; padding: 0; border: 0; background: none; box-shadow: none; pointer-events: none; }
+header a, header button { pointer-events: auto; }
+.brand { color: var(--signal-ink); gap: 9px; padding: 5px 10px; background: #121b1ee8; border-left: 2px solid var(--signal-accent); }
+.logo { background: transparent; color: var(--signal-accent); font: 700 15px ui-monospace,monospace; width: auto; height: auto; }
+#connection { display: none; }
+footer { inset: auto 22px 14px; border: 0; padding: 0; background: none; justify-content: flex-end; pointer-events: none; }
+footer span { display: none; }
+footer button { pointer-events: auto; }
+button, select { background: #202a2e; color: var(--signal-ink); border: 1px solid var(--signal-line); border-radius: 2px; box-shadow: none; }
+button:hover:not(:disabled), button[aria-pressed=true], .choice.selected { background: #384245; color: #fff5e5; border-color: var(--signal-accent); }
+button.primary { background: var(--signal-accent); color: #191812; border-color: var(--signal-accent); }
+button.primary:hover:not(:disabled) { background: #ffd394; color: #17150f; }
+button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px solid var(--signal-accent); outline-offset: 3px; }
+kbd { font: 700 .85em ui-monospace,monospace; color: var(--signal-accent); }
+button.primary kbd { color: inherit; }
+#hud { inset: 75px auto auto 22px; width: min(300px,calc(100vw - 44px)); }
+#hud .hud-panel { background: linear-gradient(90deg,#131b1ff5,#131b1fdf); border: 0; border-left: 2px solid var(--signal-accent); border-radius: 0; box-shadow: none; padding: 13px 15px; }
+.hud-title { font-size: 20px; margin: 4px 0 5px; }
+.objective { margin: 0; color: #d7dfdc; font-size: 14px; line-height: 1.42; }
+.hud-bottom { margin-top: 10px; }
+.eyebrow, .quest-place { color: var(--signal-accent); }
+#countdown { inset: 14px auto auto 50%; padding: 6px 14px; border: 1px solid #69736d; border-radius: 0; background: #131b1ff2; color: #fff5df; }
+#countdown b { color: inherit; font: 700 24px ui-monospace,monospace; }
+#countdown small { color: #e0dacc; }
+#countdown.urgent, #countdown.critical { background: #381e1b; color: #ffd5b1; }
+#map-panel { inset: auto 22px 56px auto; transform: none; width: auto; border: 1px solid #495653; border-radius: 0; background: #141c20ef; color: #eae8dd; padding: 8px; }
+.map-title { padding: 0 3px 5px; font: 11px ui-monospace,monospace; text-transform: uppercase; letter-spacing: .1em; }
+.map-title button { display: none; }
+.map-legend { color: #c0c9c5; }
+.map-legend .blue { background:#8ed2ee; }.map-legend .green { background:#7eb79b; }.map-legend .orange { background:#f3bb64; }
+#interaction, #toast, #look-help, #voice-status, #camera-panel { border-radius: 0; background: #131b1ff2; color: var(--signal-ink); border-color: #64716b; box-shadow:none; }
+#interaction { bottom: 11%; }
+#toast { bottom: 19%; }
+#look-help { bottom: 16px; }
+#modal-layer:has(.dialog) ~ * { isolation: isolate; }
+body:has(.dialog) :is(#hud,#map-panel,#interaction,#look-help) { visibility: hidden; }
+.backdrop { background: #090e11a8; backdrop-filter: none; }
+.dialog, .card { border-radius: 0; background: #151e23; color: var(--signal-ink); border: 1px solid #53615f; box-shadow: 0 20px 45px #0007; }
+.dialog { border-top: 3px solid var(--signal-accent); padding: clamp(20px,4vw,38px); }
+.dialog h2 { font-size: clamp(22px,3vw,34px); font-weight: 650; margin-bottom: 5px; }
+.document-text { font: 17px/1.55 system-ui,sans-serif; background: none; border: 0; border-top: 1px solid #53615f; color: #e8e6db; padding: 15px 0 0; }
+.document-text strong { color: var(--signal-accent); }
+.small,.muted,.menu-summary { color: var(--signal-muted); }
+.hero { background: none; box-shadow: none; padding: 0; border: 0; margin: clamp(62px,12vh,125px) 0 0 clamp(24px,7vw,120px); max-width: min(530px,calc(100vw - 48px)); }
+.hero h1 { font-size: clamp(55px,9vw,124px); line-height: .9; letter-spacing: -.075em; text-wrap: balance; margin: 12px 0 24px; }
+.hero .lead { color: #c8d0cb; max-width: 38ch; }
+.menu-buttons { max-width: 350px; }
+.menu-buttons button { text-align: left; }
+.era-line { display: none; }
+.quest-summary,.circuit-status,.radio-transcript,.case-progress span,.beacon-progress span,.riddle,.dial-unit { background: #202b30; color: var(--signal-ink); border-color: var(--signal-line); }
+.circuit-board,.circuit-tile,.pipe-option,.time-choice { background: #202b30; color: var(--signal-ink); border-color: var(--signal-line); }
+.circuit-tile svg path,.pipe-option svg path { stroke: var(--signal-accent); }
+.dial-unit b,.journal-entry summary,.quest-summary strong,.result-stats b { color: var(--signal-accent); }
+body.contrast { --signal-ink:#fff; --signal-muted:#eee; --signal-line:#a3b0aa; }
+@media(max-width:750px){
+ header{inset:10px 10px auto; gap:5px}
+ .brand span:last-child{display:none}
+ #countdown{top:51px}
+ #hud{inset:96px auto auto 10px;width:min(260px,calc(100vw - 20px))}
+ #map-panel{right:10px;bottom:52px;transform:scale(.73);transform-origin:bottom right}
+ #interaction{bottom:24%} #toast{bottom:31%}
+ footer{right:10px}
+}
+.signal-hint { padding: 12px 14px; border-left: 2px solid var(--signal-accent); background: #262e30; line-height: 1.45; margin: 0; }
+body .era-note { color: var(--signal-muted); }
+body.era-future #hud .hud-panel, body.era-future .dialog { background: #151e23; border-color: var(--signal-accent); }
+body.era-future .document-text { background: transparent; color: var(--signal-ink); }
+
+.hero.timeless-start { margin-top: clamp(30px, 6vh, 90px); max-width: min(650px,calc(100vw - 48px)); }
+.hero .timeless-title { margin: 0 0 16px; }
+.timeless-title img { display: block; width: 100%; height: auto; border: 1px solid #53615f; }
+.timeless-start .lead { margin: 8px 0 18px; }

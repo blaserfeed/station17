@@ -82,6 +82,12 @@ export function attachAtmosphere(scene, renderer) {
   }
 
   function update(world, dt, t) {
+    if (era === 1) {
+      const pressure = world.pressure || 0;
+      const flicker = reduced ? 1 : .92 + Math.sin(t * 2.1) * .08;
+      alarm.intensity = [0, 26, 65][pressure] * flicker;
+      world.sun.intensity = ERAS[1].sunI * [1, .82, .55][pressure];
+    }
     if (reduced) return;
     const pos = dust.geometry.attributes.position;
     for (let i = 0; i < dustCount; i++) {
@@ -107,8 +113,7 @@ export function attachAtmosphere(scene, renderer) {
       puff.scale.setScalar(.6 + k);
       puff.material.opacity = (1 - k) * .18;
     });
-    if (era === 1) alarm.intensity = 1.6 + Math.sin(t * 3.4) * 1.4 + (Math.sin(t * 11) > .92 ? 2.2 : 0);
-    else alarm.intensity = 0;
+    if (era !== 1) alarm.intensity = 0;
     if (memory > 0) {
       const blend = (Math.sin(t * .7) + 1) / 2;
       const a = ERAS[Math.floor(blend * 2.99)];

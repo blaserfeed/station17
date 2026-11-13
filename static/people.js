@@ -599,6 +599,21 @@ export function person(name) {
   return root;
 }
 
+export function reachForSwitch(root, target, amount) {
+  const rig=root.userData.rig;
+  if(!rig||amount<=0)return;
+  const upper=rig.scene.getObjectByName('upperarm_r');
+  const lower=rig.scene.getObjectByName('lowerarm_r');
+  if(!upper||!lower)return;
+  const bend=new THREE.Vector3(0,1,0);
+  const shoulder=upper.getWorldPosition(new THREE.Vector3());
+  const direction=target.clone().sub(shoulder);
+  direction.y-=.12;
+  aimLimb(upper,direction,bend,amount);
+  const elbow=lower.getWorldPosition(new THREE.Vector3());
+  aimLimb(lower,target.clone().sub(elbow),bend,amount);
+}
+
 export function animateArrival(root,dt,progress) {
   animatePerson(root,dt);
   const rig=root.userData.rig;

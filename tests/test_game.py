@@ -5,14 +5,14 @@ from unittest.mock import patch
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from backend.core import fresh,apply,public_game,GameError,objective
-from backend.content import EPOCHS,VALVE,SAFE,BEACON,NPC,FLOOD_WALL,PORTAL,PORTAL_CONSOLE,PORTAL_FUSE,PORTAL_EXIT,SPAWN
+from backend.content import EPOCHS,VALVE,SAFE,BEACON,NPC,FLOOD_WALL,PORTAL,PORTAL_CONSOLE,PORTAL_FUSE,PORTAL_EXIT,SPAWN,PORTAL_CIRCUIT
 from backend.server import GameServer,Handler,connect,signed_event,settle
 from backend.collision import can_stand,DRESSING
 
 def powered(g):
  if g['portal']['repaired']:return g
  g,_=apply(g,'collect',{'id':'portal_fuse','position':PORTAL_FUSE})
- return apply(g,'portal_repair',{'position':PORTAL_CONSOLE})[0]
+ return apply(g,'portal_repair',{'position':PORTAL_CONSOLE,'circuit':list(PORTAL_CIRCUIT)})[0]
 
 def hop(g,stage):
  if g['stage']==stage:return g
@@ -24,7 +24,18 @@ def read(g,stage,name):
  return apply(g,'collect',{'id':name,'position':c['pos']})[0]
 def unlock(g):
  g=read(g,2,'registry');g=hop(g,1);return apply(g,'safe_check',{'values':[4,1,7],'position':SAFE})[0]
-def diagnosed(g):return hop(read(g,2,'calibration'),0)
+def diagnosed(g):
+ g=hop(g,0)
+ for name in ('signature','carrier','delay'):g=read(g,0,name)
+ return g
+def with_letter(g):
+ if 'letter' not in g['inventory']:g['inventory'].append('letter')
+ return g
+def settled(g):
+ g=with_letter(g)
+ if g.get('sergey') not in ('killed','outsmart'):
+  g,_=apply(g,'talk',{'intent':'outsmart','position':NPC})
+ return g
 def bypass(g,line='b'):return apply(g,'bypass',{'line':line,'position':VALVE})[0]
 def repaired(g):return bypass(diagnosed(g))
 def synced(g):return hop(read(repaired(g),2,'fatherlog'),1)
@@ -51,7 +62,7 @@ class Investigation(unittest.TestCase):
  def test_a09_documents_not_duplicated(self):
   g=read(read(fresh(),2,'registry'),2,'registry');self.assertEqual(g['inventory'].count('registry'),1)
  def test_a10_safe_correct_code_award(self):
-  g=unlock(fresh());self.assertTrue(g['safe_open']);self.assertIn('blueprint',g['inventory']);self.assertIn('letter',g['inventory']);self.assertEqual((g['P'],g['C']),(100,0))
+  g=unlock(fresh());self.assertTrue(g['safe_open']);self.assertIn('blueprint',g['inventory']);self.assertIn('letter',g['inventory']);self.assertEqual((g['P'],g['C']),(100,1))
  def test_a11_safe_wrong_code_no_damage(self):
   g,_=apply(fresh(),'safe_check',{'values':[0,0,0],'position':SAFE});self.assertEqual((g['S'],g['P'],g['total_errors']),(20,0,1))
  def test_a12_safe_no_farming(self):
@@ -74,10 +85,17 @@ class Investigation(unittest.TestCase):
   g=repaired(fresh());self.assertTrue(g['repairs']['valve']);self.assertFalse(g['safe_open'])
  def test_a20_both_wrong_paths_give_feedback(self):
   start=diagnosed(fresh())
-  for line,fragment in [('a','разрыва'),('c','замыкается')]:
-   g,e=apply(start,'bypass',{'line':line,'position':VALVE});self.assertFalse(g['repairs']['valve']);self.assertEqual(g['total_errors'],1);self.assertIn(fragment,e['message'])
+  burst,e=apply(start,'bypass',{'line':'a','position':VALVE})
+  self.assertEqual((burst['failure_kind'],burst['repairs']['valve'],e['cinematic']),('rupture',False,'rupture'))
+  self.assertIn('разрыва',e['message'])
+  trapped,e=apply(start,'bypass',{'line':'c','position':VALVE})
+  self.assertEqual((trapped['failure_kind'],e['cinematic']),('trapped','trapped'))
+  self.assertIn('замыкается',e['message'])
+  replay,_=apply(trapped,'retry',{})
+  self.assertEqual((replay['stage'],replay['inventory'],replay['phase']), (1,['radio'],'explore'))
  def test_a21_incorrect_bypass_keeps_link_quality(self):
-  g=diagnosed(fresh());self.assertEqual(bypass(g,'a')['S'],g['S'])
+  g=diagnosed(fresh());burst=bypass(g,'a');self.assertEqual(burst['phase'],'over')
+  back,_=apply(burst,'retry',{});self.assertEqual(back['S'],g['S']);self.assertIn('signature',back['inventory']);self.assertFalse(back['repairs']['valve'])
  def test_a22_valve_riddle_and_causality(self):
   self.assertIn(FLOOD_WALL,public_game(hop(fresh(),2),False)['walls'])
   g=repaired(fresh());p=public_game(hop(g,2),False);self.assertFalse(p['flooded']);self.assertNotIn(FLOOD_WALL,p['walls']);self.assertEqual(g['P'],100)
@@ -94,16 +112,16 @@ class Investigation(unittest.TestCase):
   p=public_game(hop(repaired(fresh()),1),False)
   self.assertTrue(p['can_finish']);self.assertFalse(p['can_return'])
  def test_a28_rescue_route_uses_four_transfers(self):
-  g=synced(fresh());self.assertEqual((g['visits'],g['C'],g['P']),([1,2,2],3,100))
+  g=synced(fresh());self.assertEqual((g['visits'],g['C'],g['P']),([1,2,1],3,100))
  def test_a29_legacy_save_recognizes_completed_repair(self):
   g=hop(fresh(),2);g['repairs']['valve']=True;g['beacons']=[False,True,False];g['power']=True
   p=public_game(g,False);self.assertEqual(p['objective']['title'],'Забрать запись отца');self.assertFalse(p['flooded'])
  def test_a30_reel_remains_in_inventory_after_return(self):
   g=synced(fresh());self.assertTrue(public_game(g,False)['can_return'])
  def test_a31_good_ending_and_maximum_score(self):
-  g,_=apply(synced(fresh()),'finish',{'id':'return','position':BEACON},True);self.assertEqual((g['ending'],g['P'],g['phase']),('Возвращение',250,'results'))
+  g,_=apply(settled(synced(fresh())),'finish',{'id':'return','position':BEACON},True);self.assertEqual((g['ending'],g['P'],g['phase']),('Возвращение',250,'results'))
  def test_a32_all_three_endings(self):
-  g=synced(fresh())
+  g=settled(synced(fresh()))
   for choice,title in [('return','Возвращение'),('seal','Последняя смена'),('erase','Чистый лист')]:self.assertEqual(apply(g,'finish',{'id':choice,'position':BEACON},True)[0]['ending'],title)
  def test_a33_ending_requires_paid_chapter(self):
   with self.assertRaises(GameError):apply(synced(fresh()),'finish',{'id':'return','position':BEACON},False)
@@ -115,6 +133,18 @@ class Investigation(unittest.TestCase):
   with self.assertRaises(GameError):apply(fresh(),'talk',{'intent':'confession','position':NPC})
  def test_a37_confession_after_future_log(self):
   g=read(repaired(fresh()),2,'fatherlog');g,e=apply(g,'talk',{'intent':'confession','position':NPC});self.assertIn('2016',e['message']);self.assertEqual(g['T'],1)
+ def test_a37b_letter_then_outsmart_or_kill_before_return(self):
+  g=synced(fresh())
+  blocked,e=apply(g,'finish',{'id':'return','position':BEACON},True)
+  self.assertEqual(e.get('confront'),'need-letter');self.assertEqual(blocked['phase'],'explore')
+  g=with_letter(g)
+  waiting,e=apply(g,'finish',{'id':'return','position':BEACON},True)
+  self.assertEqual(e.get('confront'),'sergey')
+  killed,_=apply(g,'talk',{'intent':'kill','position':NPC})
+  self.assertEqual(killed['sergey'],'killed')
+  self.assertIsNone(public_game(killed,False)['npc_position'])
+  done,_=apply(killed,'finish',{'id':'return','position':BEACON},True)
+  self.assertEqual(done['ending'],'Возвращение')
  def test_a38_empathy_not_farmed(self):
   g=fresh()
   for _ in range(2):g,_=apply(g,'talk',{'intent':'empathize','position':NPC})
@@ -122,7 +152,7 @@ class Investigation(unittest.TestCase):
  def test_a39_reject_nan_position(self):
   with self.assertRaises(GameError):apply(fresh(),'safe_check',{'position':[float('nan'),0],'values':[4,1,7]})
  def test_a40_puzzles_cannot_modify_ending_state(self):
-  g,_=apply(synced(fresh()),'finish',{'id':'return','position':BEACON},True)
+  g,_=apply(settled(synced(fresh())),'finish',{'id':'return','position':BEACON},True)
   with self.assertRaises(GameError):apply(g,'safe_check',{'position':SAFE,'values':[4,1,7]})
  def test_a41_voice_and_gestures_sources(self):
   g,_=apply(fresh(),'hint',{'source':'voice'});g,_=apply(g,'hint',{'source':'gesture'});self.assertEqual((g['voice_actions'],g['gesture_actions']),(1,1))
@@ -149,7 +179,7 @@ class Investigation(unittest.TestCase):
  def test_a52_timeout_requests_real_cinematic(self):
   g,_=apply(fresh(),'clock',{'running':True},now=100);g,e=apply(g,'tick',{},now=1600);self.assertEqual((g['phase'],g['ending'],g['failure_kind']),('over','Авария на станции','timeout'));self.assertEqual(e['cinematic'],'flood');self.assertFalse(g['timer']['running'])
  def test_a53_ending_wins_before_deadline(self):
-  g=synced(fresh());g,_=apply(g,'clock',{'running':True},now=100);g,_=apply(g,'finish',{'id':'return','position':BEACON},True,now=1599);self.assertEqual(g['ending'],'Возвращение');self.assertFalse(g['timer']['running'])
+  g=settled(synced(fresh()));g,_=apply(g,'clock',{'running':True},now=100);g,_=apply(g,'finish',{'id':'return','position':BEACON},True,now=1599);self.assertEqual(g['ending'],'Возвращение');self.assertFalse(g['timer']['running'])
  def test_a54_timeout_wins_finish_race(self):
   g=synced(fresh());g,_=apply(g,'clock',{'running':True},now=100);g,e=apply(g,'finish',{'id':'return','position':BEACON},True,now=1600);self.assertEqual(g['ending'],'Авария на станции');self.assertEqual(g['P'],100)
  def test_a55_timeout_retry_is_new_attempt(self):
@@ -206,7 +236,7 @@ class Investigation(unittest.TestCase):
   self.assertTrue(can_stand(*g['position'],public_game(g,False)['solids']))
 
  def test_a67_hint_disqualifies_precision_achievement(self):
-  g,_=apply(synced(fresh()),'hint',{})
+  g,_=apply(settled(synced(fresh())),'hint',{})
   g,_=apply(g,'finish',{'id':'return','position':BEACON},True)
   self.assertFalse(public_game(g,True)['achievement'])
 
@@ -218,6 +248,10 @@ class Investigation(unittest.TestCase):
      with self.subTest(stage=stage,object=key,position=spot):self.assertFalse(can_stand(*spot[:2],solids))
    if stage!=2:
     for point in DRESSING['plants']:self.assertFalse(can_stand(*point,solids))
+   for point in DRESSING['room_plants']:
+    with self.subTest(stage=stage,object='room_plants',position=point):self.assertFalse(can_stand(*point,solids))
+   for spot in DRESSING['paintings']:
+    with self.subTest(stage=stage,object='paintings',position=spot):self.assertFalse(can_stand(spot[0],spot[1],solids))
 
  def test_a69_story_interactions_remain_reachable(self):
   from collections import deque
@@ -245,7 +279,15 @@ class Investigation(unittest.TestCase):
   self.assertEqual(objective(g)['target'],PORTAL_FUSE)
   with self.assertRaises(GameError):apply(g,'portal_repair',{'position':PORTAL_CONSOLE})
   with self.assertRaises(GameError):apply(g,'portal_open',{'target':2,'position':PORTAL_CONSOLE})
+  g,_=apply(g,'collect',{'id':'portal_fuse','position':PORTAL_FUSE})
+  self.assertEqual(objective(g)['target'],PORTAL_CONSOLE)
+  with self.assertRaises(GameError):apply(g,'portal_repair',{'position':PORTAL_CONSOLE})
+  wrong,event=apply(g,'portal_repair',{'position':PORTAL_CONSOLE,'circuit':[0,0,0,0]})
+  self.assertFalse(wrong['portal']['repaired'])
+  self.assertIn('Цепь',event['message'])
   g=powered(g)
+  jumped,_=apply(g,'portal_open',{'target':2,'enter':True,'position':PORTAL_CONSOLE})
+  self.assertEqual(jumped['stage'],2)
   with self.assertRaises(GameError):apply(g,'portal_open',{'target':2,'position':SPAWN})
   g,_=apply(g,'portal_open',{'target':2,'position':PORTAL_CONSOLE})
   self.assertEqual(g['stage'],1)
@@ -329,7 +371,7 @@ class HTTP(unittest.TestCase):
 
  def test_36_achievement_matches_result_history_after_hint(self):
   self.post('/api/action',{'kind':'new'})
-  game,_=apply(synced(fresh()),'hint',{})
+  game,_=apply(settled(synced(fresh())),'hint',{})
   jar=next(h.cookiejar for h in self.client.handlers if hasattr(h,'cookiejar'))
   profile=next(c.value for c in jar if c.name=='chronoshov')
   with connect(self.path) as db:db.execute('UPDATE profiles SET game=?,full_access=1 WHERE id=?',(json.dumps(game),profile))

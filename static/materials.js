@@ -64,6 +64,24 @@ function grain(ctx, rand, count, alpha) {
   }
 }
 
+// Small, soft tonal changes break up the repeating panel pattern.
+function weathering(ctx, rand, stage, floor = false) {
+  const count = stage === 1 ? 75 : stage === 0 ? 36 : 20;
+  for (let i = 0; i < count; i++) {
+    const x = rand() * 512, y = rand() * 512, size = 5 + rand() * 34;
+    const opacity = (stage === 1 ? .11 : .055) * rand();
+    for (const dx of [-512, 0, 512]) for (const dy of [-512, 0, 512]) {
+      const px=x+dx, py=y+dy;
+      if(px+size<0||px-size>512||py+size<0||py-size>512)continue;
+      const mark=ctx.createRadialGradient(px,py,0,px,py,size);
+      mark.addColorStop(0,floor?'rgba(29,37,32,'+opacity+')':'rgba(79,60,36,'+opacity+')');
+      mark.addColorStop(1,'rgba(45,42,32,0)');
+      ctx.fillStyle=mark;
+      ctx.fillRect(px-size,py-size,size*2,size*2);
+    }
+  }
+}
+
 function paintPlaster(stage) {
   const c = canvas();
   const ctx = c.getContext('2d');
@@ -71,7 +89,8 @@ function paintPlaster(stage) {
   ctx.fillStyle = base;
   ctx.fillRect(0, 0, 512, 512);
   const rand = rng(210 + stage * 17);
-  grain(ctx, rand, stage===2?2200:5000, stage===2?.09:.15);
+  weathering(ctx,rand,stage);
+  grain(ctx, rand, stage===2?1300:2500, stage===2?.07:.10);
   ctx.strokeStyle = stage === 1 ? 'rgba(40,48,52,.22)' : 'rgba(70,60,40,.16)';
   ctx.lineWidth = 3;
   for (let x = 0; x <= 512; x += 128) {
@@ -108,8 +127,9 @@ function paintPlaster(stage) {
   const r = rough.getContext('2d');
   r.fillStyle = stage === 1 ? '#9a9a9a' : '#b5b5b5';
   r.fillRect(0, 0, 512, 512);
+  r.globalAlpha=.3;
   r.drawImage(height, 0, 0);
-  return {color: c, height, rough, metalness: .04, normalScale: .85};
+  return {color: c, height, rough, metalness: .04, normalScale: .38};
 }
 
 function paintFloor(stage) {
@@ -118,41 +138,15 @@ function paintFloor(stage) {
   ctx.fillStyle = ['#ab9f85', '#899994', '#b5c6c4'][stage];
   ctx.fillRect(0, 0, 512, 512);
   const rand = rng(88 + stage);
-  for (let y = 0; y < 512; y += 128) {
-    for (let x = 0; x < 512; x += 128) {
-      const shift = Math.floor((rand() - .5) * 18);
-      ctx.fillStyle = `rgba(${120 + shift},${110 + shift},${96 + shift},.18)`;
-      ctx.fillRect(x + 4, y + 4, 120, 120);
-    }
-  }
-  ctx.strokeStyle = stage === 0 ? '#8d7354' : '#7d8c8a';
-  ctx.lineWidth = 2;
-  for (let i = 0; i <= 512; i += 128) {
-    ctx.beginPath();
-    ctx.moveTo(0, i);
-    ctx.lineTo(512, i);
-    ctx.moveTo(i, 0);
-    ctx.lineTo(i, 512);
-    ctx.stroke();
-  }
-  grain(ctx, rand, 1800, .08);
+  weathering(ctx,rand,stage,true);
+  grain(ctx, rand, 2600, .07);
   const height = canvas();
   const h = height.getContext('2d');
   h.fillStyle = '#9a9a9a';
   h.fillRect(0, 0, 512, 512);
-  h.strokeStyle = '#4a4a4a';
-  h.lineWidth = 6;
-  for (let i = 0; i <= 512; i += 128) {
-    h.beginPath();
-    h.moveTo(0, i);
-    h.lineTo(512, i);
-    h.moveTo(i, 0);
-    h.lineTo(i, 512);
-    h.stroke();
-  }
   const rough = canvas();
   rough.getContext('2d').drawImage(height, 0, 0);
-  return {color: c, height, rough, metalness: .02, normalScale: .6};
+  return {color: c, height, rough, metalness: .02, normalScale: .33};
 }
 
 function paintEarth(stage) {

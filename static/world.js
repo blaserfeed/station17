@@ -3,7 +3,7 @@ import { StationCollision } from './collision.js';
 import {buildPortal,portalCrossing} from './portal.js';
 import {batchStaticMeshes} from './batching.js';
 import {integrateMotion,CLIP_FOOTFALLS} from './locomotion.js';
-import { person, animatePerson, animateArrival, footShadow, placeFootShadow, JUMP, WALK_SPEED, RUN_SPEED } from './people.js';
+import { person, animatePerson, animateArrival, reachForSwitch, footShadow, placeFootShadow, JUMP, WALK_SPEED, RUN_SPEED } from './people.js';
 import { metal, casing, cylinder, pipe, generator, vessel, bench, chair, deskLamp,
   plant, valveBank, emergencyConsole, reel, rotorBlade, dressing, roof } from './industrial.js';
 import { attachAtmosphere } from './atmosphere.js';
@@ -93,6 +93,7 @@ export class World{
   const changedRepair=this.repairsKey!==JSON.stringify(g.repairs);
   const doorChanged=this.game?.safe_open!==g.safe_open;
   const newRun=this.game?.run_id!==g.run_id;
+  const wasSergey=!!this.game?.npc_position;
   if(changedRoom||changedRepair)this.build(g);
   if(changedRoom||changedRepair||doorChanged){
    this.cameraReady=false;
@@ -118,10 +119,13 @@ export class World{
    this.fatherShadow.visible=false;
    this.scene.add(this.fatherShadow);
   }
-  this.portal?.setState(g.portal);
+  if(!this.confession&&!this.reunion)this.portal?.setState(g.portal);
   if(this.fusePickup)this.fusePickup.visible=!g.inventory.includes('portal_fuse');
   if(this.safeDoor)this.safeDoor.rotation.y=g.safe_door_angle??(g.safe_open?-1.25:0);
   if(this.caseReel)this.caseReel.visible=!g.inventory.includes('fatherlog');
+  const sergey=!!g.npc_position;
+  if(this.collision&&wasSergey!==sergey)this.collision=new StationCollision(g.solids||[],g.bounds,g.player_radius||.43);
+  this.npc.visible=sergey||!!this.departure||!!this.confession;this.npcShadow.visible=sergey;if(this.npcLabel)this.npcLabel.visible=sergey;
  }
  build(g){
   const oldMaterials=new Set(),oldTextures=new Set(),mapKeys=['map','normalMap','roughnessMap','bumpMap','metalnessMap','emissiveMap','alphaMap'];for(const c of [...this.level.children]){this.level.remove(c);c.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.geometry?.dispose();for(const m of Array.isArray(o.material)?o.material:o.material?[o.material]:[]){oldMaterials.add(m);for(const key of mapKeys){const tex=m[key];if(tex&&!tex.userData.keep)oldTextures.add(tex);}}});}oldMaterials.forEach(m=>m.dispose());oldTextures.forEach(t=>t.dispose());
@@ -203,12 +207,13 @@ export class World{
    chair(this.level,cx,cz,stage,piping,z===18?Math.PI:0);
    deskLamp(this.level,x-1,z-.29,stage,piping);
    if(future)surface(this.level,[x+.86,1.32,z-.197],[.70,.355],'СЕРВИС 2074',['Синхронизация завершена'],true);
+   else if(stage===1)surface(this.level,[x+.86,1.32,z-.14],[.70,.355],'СМЕНА 29.10',['17:40  •  связь жива','Не обрывай контур']);
   }
   for(const [x,z] of g.layout?.tanks||[[17,-22],[23,-22],[30,-22]])vessel(this.level,x,z,base,piping,future);
   // Noticeboards and framed records belong to the station, not floating quest markers.
   box(this.level,[4,2.1,.12],[0,2.05,26.85],stage===2?steel:wood);
-  surface(this.level,[0,2.1,26.76],[3.8,1.9],stage===0?'СМЕННЫЙ ЖУРНАЛ':stage===1?'ПОСТ ДЕЖУРНОГО':'МУЗЕЙ ПЕРВОГО ПУСКА',stage===0?['Объект 17  •  1978','Четвёртый контур — опытный','Записи наладки хранить в архиве']:stage===1?['29.10.2026  •  17:40','Последняя запись: О. Соколов','Повтор сигнала от 2016 года']:['Автономный корпус  •  2074','Исторический отсек сохранён',g.repairs?.valve?'Резерв восстановлен в 1978 году':'Причина затопления — старый клапан'],stage===2,Math.PI);
-  if(stage===0){for(let z=-22;z<26;z+=4)for(let k=0;k<5;k++)details.push([11.62,1.2+k*.18,z,.02,.15,1.0,0xbaa88b]);surface(this.level,[-11.6,2.3,21],[2,1.3],'КАЛЕНДАРЬ',['1978','До первого пуска один день'],false,Math.PI/2);}
+  surface(this.level,[0,2.1,26.76],[3.8,1.9],stage===0?'СМЕННЫЙ ЖУРНАЛ':stage===1?'ПОСТ ДЕЖУРНОГО':'МУЗЕЙ ПЕРВОГО ПУСКА',stage===0?['Объект 17  •  1978','До пуска один день','Клапан ещё слушается руки']:stage===1?['29.10.2026  •  17:40','Голос О. Соколова — сегодня','Сначала клапан, не спасение']:['Та же станция  •  2074','Вода помнит закрытую линию',g.repairs?.valve?'Линия Б осушила проход':'Катушка за затопленным проходом'],stage===2,Math.PI);
+  if(stage===0){surface(this.level,[-11.6,2.3,21],[2,1.3],'КАЛЕНДАРЬ',['1978','До первого пуска один день'],false,Math.PI/2);}
   if(stage===1){for(let z=-24;z<25;z+=3){details.push([-11.65,3.1,z,.18,.12,2.8,0x717b70],[11.65,3.1,z,.18,.12,2.8,0x717b70]);}for(const [x,z] of [[-15,17],[16,-14],[29,11]])details.push([x,.025,z,1.2,.01,.45,0x919d8c]);}
   if(stage===2){
    for(const x of [-11.55,11.55])for(const [z,d] of [[-22.5,9],[-2,16],[20.5,13]]){box(this.level,[.035,3.2,d-.3],[x,2,z],mat(0xb6d7da,{transparent:true,opacity:.06,depthWrite:false,roughness:.15}));box(this.level,[.035,.045,d-.3],[x,.4,z],mat(0x7fc6c7,{emissive:0x4ba6b0,emissiveIntensity:.3}));}
@@ -217,15 +222,30 @@ export class World{
   }
   detailsBatch(this.level,details);
   dressing(this.level, stage,g.layout?.dressing);this.lamps=[];this.level.traverse(o=>{if(o.isPointLight)this.lamps.push({light:o,base:o.intensity});});
+  const frames=g.layout?.dressing?.paintings||[[-24,-26.2,0,'archive'],[24,-26.2,0,'turbine'],[22,26.2,Math.PI,'dispatch'],[-22,26.2,Math.PI,'workshop'],[8,-26.2,0,'hall'],[-11.55,-4,Math.PI/2,'hall_west'],[11.55,-4,-Math.PI/2,'hall_east']];
+  const captions=[
+   {archive:['ЛЕВАЯ ТРУБА',['Это не резерв','Шкаф — 4']],turbine:['ПРАВАЯ ТРУБА',['Вода идёт в насос','Полка — 1']],dispatch:['ПОРЯДОК ЩИТА',['Слева направо А, Б, В','Дело — 7']],workshop:['ТРИ ЛИНИИ',['Букву не ищите здесь','Сведите три комнаты']],hall:['ДО ПУСКА',['Клапан ещё слушается','Один день']],hall_west:['АРХИВ',['Ведомость на столе','Левая труба — не резерв']],hall_east:['ТУРБИНЫ',['Карточка на столе','Правая — в насос']]},
+   {archive:['СЕМЕЙНОЕ ДЕЛО',['Сейф в этой комнате','Шкаф, полка, дело']],turbine:['2016',['Не обрывай связь','Дождись сигнала']],dispatch:['ГОЛОС',['Дата — сегодня','Сначала резерв']],workshop:['КОНТУР 4',['Цепь собирают у арки','Не в этих комнатах']],hall:['ЦЕПЬ',['Не напрямик','Обход снизу']],hall_west:['АРХИВ',['Сейф семейного дела','Письмо до пульта']],hall_east:['ТУРБИНЫ',['Снимок последней смены','Отец просил ждать']]},
+   {archive:['ДЕЛО СОКОЛОВА',['Цифры остались в 1978','Три комнаты']],turbine:['РОТОРЫ',['Ждут открытый резерв','Буквы здесь нет']],dispatch:['СВЯЗЬ',['Катушка за водой','Сначала клапан']],workshop:['МУЗЕЙ',['Станция та же','Вода помнит резерв']],hall:['ПОСЛЕ НАС',['Отчёт лежит у клапана','Буква на нём стёрта']],hall_west:['АРХИВ',['Карточка без цифр','Смотрите 1978']],hall_east:['ТИШИНА',['Роторы ждут резерв','Катушка за водой']]},
+  ][stage];
+  const frameWood=metal(stage===2?0x6d807c:0x6b4e38,.72);
+  for(const [x,z,yaw,slot] of frames){
+   const [title,lines]=captions[slot];
+   const frame=new THREE.Group();frame.position.set(x,1.55,z);frame.rotation.y=yaw;frame.name='painting';this.level.add(frame);
+   casing(frame,[1.35,.96,.07],[0,0,0],frameWood,.02);
+   surface(frame,[0,0,.046],[1.12,.74],title,lines,stage===2,0);
+  }
   this.portal=g.portal?buildPortal(this.level,g.portal,(text,pos,width,parent)=>{
    const plate=label(text);plate.position.set(...pos);plate.scale.set(width,.34,1);parent.add(plate);
   }):null;
   this.portal?.setState(g.portal);
   this.fusePickup=null;
   this.caseReel=null;
+  const slips={signature:['ШКАФ — 4',['Левая труба — не резерв']],carrier:['ПОЛКА — 1',['Правая труба — в насос']],delay:['ДЕЛО — 7',['Слева направо: А, Б, В']],photo:['2016',['Не обрывай связь']],radio:['СЕГОДНЯ',['Сначала открой резерв']],safe_note:['СЕЙФ',['Шкаф, полка, дело']]};
   for(const c of g.epoch.clues){
    if(c.requires==='valve'&&!g.repairs.valve)continue;
-   const p=new THREE.Group();p.position.set(c.pos[0],1.03,c.pos[1]);this.level.add(p);
+   const onDesk=!!slips[c.id];
+   const p=new THREE.Group();p.position.set(c.pos[0],c.id==='lines'||onDesk?1.0:1.03,c.pos[1]);this.level.add(p);
    if(c.id==='portal_fuse'){
     p.name='portal-fuse';p.position.y=.55;
     const caseBase=casing(this.level,[.65,.53,.45],[c.pos[0],.265,c.pos[1]],dark,.035);
@@ -237,19 +257,29 @@ export class World{
     p.name='father-recording';reel(p,[0,.055,0]);this.caseReel=p;p.visible=!g.inventory?.includes('fatherlog');
    }else if(c.id==='calibration'){
     casing(p,[.66,.41,.19],[0,.15,0],dark);
-    surface(p,[0,.16,.102],[.55,.31],'ДИАГНОСТИКА',['Трасса А • разрыв'],true);
+    surface(p,[0,.16,.102],[.55,.31],'ДИАГНОСТИКА',['Буква на листе стёрта','Три комнаты 1978'],true);
+    box(p,[.34,.004,.01],[.05,.2,.12],mat(0x6d5a3a));
     pipe(p,[[0,.13,-.04],[0,-.91,-.04],[-.51,-1,-.35]],.037,piping,.15);
+   }else if(c.id==='pass'){
+    casing(p,[.34,.02,.22],[0,0,0],paper,.008);
+    box(p,[.1,.006,.12],[-.08,.016,0],mat(0x6d7c78));
+   }else if(c.id==='lines'){
+    casing(p,[.62,.02,.4],[0,0,0],paper,.008);
+    for(const y of [-.08,0,.08])box(p,[.4,.004,.012],[0,.016,y],mat(0x5c6a62));
    }else{
     casing(p,[.5,.025,.36],[0,0,0],future?dark:paper,.01);
-    for(let k=0;k<4;k++)box(p,[.3,.002,.01],[0,.014,-.1+k*.055],mat(0x819080));
+    if(slips[c.id]){
+     const sheet=surface(p,[0,.02,0],[.46,.32],slips[c.id][0],slips[c.id][1],future,0);
+     sheet.rotation.x=-Math.PI/2;
+    }else for(let k=0;k<4;k++)box(p,[.3,.002,.01],[0,.014,-.1+k*.055],mat(0x819080));
    }
-   const l=label(c.name);l.position.y=.65;l.scale.set(2.2,.42,1);p.add(l);
+   const l=label(c.name);l.position.y=(c.id==='lines'||onDesk)?0.28:0.65;l.scale.set((c.id==='lines'||onDesk)?1.35:2.2,.42,1);p.add(l);
    p.userData.clueLabel=l;this.pickups.set(c.id,p);
   }
   // The family safe is a real hinged cabinet in the 2026 archive.
   this.safeDoor=null;if(stage===1){const p=new THREE.Group();p.position.set(-24,0,-23);this.level.add(p);for(const x of [-.75,.75])box(p,[.15,2,.9],[x,1,0],mat(0x647b73));for(const y of [.07,1.93])box(p,[1.65,.14,.9],[0,y,0],mat(0x647b73));box(p,[1.65,2,.12],[0,1,-.4],mat(0x647b73));box(p,[1.35,1.65,.04],[0,1,-.31],mat(0x2d4441));box(p,[.8,.05,.5],[0,.25,.05],paper);box(p,[.45,.04,.3],[.1,.33,.03],paper);const hinge=new THREE.Group();hinge.position.set(-.75,1,.57);p.add(hinge);casing(hinge,[1.5,1.85,.13],[.75,0,0],mat(0x82968a));for(const y of [-.55,.55])box(hinge,[.09,.2,.12],[.04,y,.08],steel);casing(hinge,[.48,.28,.07],[.75,.23,.1],mat(0x314b4b));for(let k=0;k<3;k++)box(hinge,[.1,.14,.03],[.61+k*.15,.23,.15],paper);mesh(new THREE.TorusGeometry(.17,.025,8,24),steel,hinge,[1.07,-.24,.12]);this.safeDoor=hinge;surface(hinge,[.75,.58,.083],[1.20,.30],'СЕМЕЙНОЕ ДЕЛО',['СОКОЛОВЫ · АРХИВ'],false);}
   const consolePos=g.beacon_position||[-7,21];
-  const consoleRoot=emergencyConsole(this.level,[consolePos[0],0,consolePos[1]],future,g.repairs.valve);
+  const consoleRoot=emergencyConsole(this.level,[consolePos[0],0,consolePos[1]],future,g.repairs.valve,stage===1);
   if(stage===1)surface(consoleRoot,[0,.63,.326],[1.03,.37],'АВАРИЙНЫЙ ПУЛЬТ',['Водосброс  /  Контур 4']);
   const repaired=g.repairs.valve;
   const valve=valveBank(this.level,[-29,0,7],stage,repaired);
@@ -269,8 +299,8 @@ export class World{
    for(const z of [1.6,5.5]){const stain=mesh(new THREE.PlaneGeometry(2.6,2.7),material,this.level,[-32.738,1.7,z]);stain.rotation.y=Math.PI/2;stain.castShadow=false;stain.name='local-water-damage';}
   }
   addContactShadows(this.level,g.solids);
-  this.batchedMeshes=batchStaticMeshes(this.level,[this.safeDoor,this.reserveWheel,...this.machineRotors,...this.pickups.values()]);
-  const npcLabel=label('Сергей Морозов');npcLabel.position.set(0,2.10,17);npcLabel.scale.set(1.37,.26,1);this.level.add(npcLabel);
+  this.batchedMeshes=batchStaticMeshes(this.level,[this.safeDoor,this.reserveWheel,...this.machineRotors,...this.pickups.values(),this.level.getObjectByName('time-portal'),this.level.getObjectByName('portal-console')]);
+  this.npcLabel=label('Сергей Морозов');this.npcLabel.position.set(0,2.10,17);this.npcLabel.scale.set(1.37,.26,1);this.npcLabel.visible=!!g.npc_position;this.level.add(this.npcLabel);
  }
  startFlood(g,motion=true){
   const sceneState={...g,stage:1,epoch:{year:2026,name:'Авария на станции',clues:[],terminals:[],hazards:[]}};this.build(sceneState);this.releaseLook();this.setActive(false);this.inGame=true;this.player.visible=false;this.npc.visible=false;this.oldMovieFov=this.camera.fov;this.camera.fov=58;this.camera.updateProjectionMatrix();this.sun.intensity=.65;
@@ -280,9 +310,87 @@ export class World{
   this.floodCinematic={started:performance.now(),water,alarm,drops,motion};this.camera.position.set(-24,2.7,12);this.camera.lookAt(-29,1.2,7);
  }
  floodStep(dt){const c=this.floodCinematic,t=(performance.now()-c.started)/1000;c.water.position.y=-.12+Math.min(1,t/7.5)*1.9;c.alarm.intensity=c.motion?65+Math.sin(t*2.2)*25:60;for(let i=0;i<c.drops.length;i++){const drop=c.drops[i],phase=(t*1.2+i/36)%1,[x,y,z]=drop.userData.spray;drop.position.set(x+Math.sin(i*2.3)*phase*2.7,y+.8*phase-2.8*phase*phase,z+Math.cos(i*2.3)*phase*2.7);drop.scale.setScalar(.5+phase*.7);}const shot=!c.motion?1:t<2.5?0:t<6?1:2;const poses=[[-24,2.7,12],[12,6,17],[0,5.7,25]],looks=[[-29,1.2,7],[0,1.3,-2],[0,.9,2]];this.camera.position.lerp(new THREE.Vector3(...poses[shot]),1-Math.exp(-dt*2));if(c.motion){this.camera.position.x+=Math.sin(t*17)*.05;this.camera.position.y+=Math.sin(t*23)*.035;}this.camera.lookAt(...looks[shot]);c.water.material.opacity=.78+Math.sin(t*3)*.08;this.player.visible=false;this.npc.visible=false;}
- endFlood(){if(!this.floodCinematic)return;this.floodCinematic.alarm.intensity=0;this.floodCinematic.drops.forEach(o=>o.visible=false);this.floodCinematic=null;this.camera.fov=this.oldMovieFov||63;this.camera.updateProjectionMatrix();this.npc.visible=true;this.cameraReady=false;}
+ endFlood(){if(!this.floodCinematic)return;this.floodCinematic.alarm.intensity=0;this.floodCinematic.drops.forEach(o=>o.visible=false);this.floodCinematic=null;this.camera.fov=this.oldMovieFov||63;this.camera.updateProjectionMatrix();this.npc.visible=!!this.game?.npc_position;this.cameraReady=false;}
  setMotion(v){this.motion=v;this.atmosphere?.setReduced(!v);}
  setGraphics(level){const next=level===0||level===2?level:1;if(this.graphics===next)return;this.graphics=next;const ratio=next===2?Math.min(devicePixelRatio,1.75):next===1?Math.min(devicePixelRatio,1.35):1;this.renderer.setPixelRatio(ratio);const shadow=next===2?2048:next===1?1024:512;this.sun.shadow.mapSize.set(shadow,shadow);if(this.sun.shadow.map){this.sun.shadow.map.dispose();this.sun.shadow.map=null;}this.scene.environment=next===0?null:environmentFor(this.game?.stage||0);this.atmosphere?.setQuality(next);if(this.game)this.build(this.game);this.resize();}
+ startDeparture(){
+  this.departure={age:0,origin:this.npc.position.clone()};
+  this.npc.visible=true;
+ }
+ departureStep(dt){
+  const shot=this.departure;
+  shot.age+=dt;
+  const points=[shot.origin,new THREE.Vector3(-7.6,0,17),new THREE.Vector3(-7.6,0,9),new THREE.Vector3(-16,0,9)];
+  const speed=3.4;
+  let distance=shot.age*speed;
+  for(let i=1;i<points.length;i++){
+   const from=points[i-1],to=points[i],length=from.distanceTo(to);
+   if(distance<length){
+    this.npc.position.lerpVectors(from,to,distance/length);
+    this.npc.rotation.y=Math.atan2(to.x-from.x,to.z-from.z);
+    animateArrival(this.npc,dt,(shot.age%1.25)/1.25);
+    return;
+   }
+   distance-=length;
+  }
+  this.departure=null;
+  this.npc.position.copy(shot.origin);
+  this.npc.visible=false;
+ }
+ startConfession(){
+  this.releaseLook();
+  this.confession={start:performance.now(),position:this.npc.position.clone(),rotation:this.npc.rotation.y};
+  this.portal?.setState({...this.game.portal,target:0});
+ }
+ confessionStep(dt){
+  const scene=this.confession;
+  const t=(performance.now()-scene.start)/1000;
+  const motion=this.motion!==false;
+  const approach=motion?THREE.MathUtils.smoothstep(t,0,3.5):1;
+  const memory=t<8.3;
+  this.npc.visible=true;
+  this.player.visible=!memory;
+  const x=THREE.MathUtils.lerp(scene.position.x,5.5,approach);
+  const z=THREE.MathUtils.lerp(scene.position.z,21.9,approach);
+  this.npc.position.set(memory?x:scene.position.x,0,memory?z:scene.position.z);
+  this.npc.rotation.y=memory?(approach<.98?1.0:2.65):scene.rotation;
+  if(memory&&motion&&approach<1)animateArrival(this.npc,dt,approach);
+  if(this.father){
+   this.father.visible=memory;
+   this.father.position.set(4,0,18.8);
+   this.father.rotation.y=0;
+   if(memory)animatePerson(this.father,dt);
+  }
+  if(memory&&this.portal){
+   const reach=THREE.MathUtils.smoothstep(t,6.85,7.72);
+   reachForSwitch(this.npc,this.portal.breakerPosition(),reach);
+  }
+  const shut=t>=7.75;
+  if(shut&&this.portal?.state.target!=null){
+   this.portal.setBreaker(true);
+   this.portal.setState({...this.game.portal,target:null});
+   this.events.breaker?.();
+  }
+  if(memory){
+   this.camera.position.set(9.0,2.3,24.8);
+   this.camera.lookAt(4.3,1.48,20.1);
+  }else{
+   const p=this.npc.position;
+   this.camera.position.set(p.x+2.6,1.9,p.z+2.75);
+   this.camera.lookAt(p.x,1.38,p.z);
+  }
+ }
+ endConfession(){
+  const shot=this.confession;
+  if(!shot)return;
+  this.confession=null;
+  this.npc.position.copy(shot.position);
+  this.npc.rotation.y=shot.rotation;
+  this.portal?.setBreaker(false);
+  if(this.father)this.father.visible=false;
+  this.portal?.setState(this.game.portal);
+  this.cameraReady=false;
+ }
  startReunion(motion){
   if(!this.portal||!this.father)return false;
   this.releaseLook();
@@ -332,10 +440,11 @@ export class World{
  jump(){if(this.active&&this.jumpAge===null)this.jumpAge=0;}
  position(){return [Number(this.player.position.x.toFixed(3)),Number(this.player.position.z.toFixed(3))];}
  nearest(){
-  const g=this.game;if(!g?.npc_position)return null;
+  const g=this.game;if(!g)return null;
   const p=this.position(), dist=q=>Math.hypot(p[0]-q[0],p[1]-q[1]);
-  const targets=[{type:'npc',pos:g.npc_position,name:'Поговорить с Сергеем'}];
-  if(g.portal)targets.push({type:'travel',pos:g.portal.console,name:g.portal.repaired?'Настроить портал':'Щиток портала'});
+  const targets=[];
+  if(g.npc_position)targets.push({type:'npc',pos:g.npc_position,name:'Поговорить с Сергеем'});
+  if(g.portal)targets.push({type:'travel',pos:g.portal.console,name:g.portal.repaired?'Настроить портал':g.inventory?.includes('portal_fuse')?'Замкнуть цепь':'Щиток портала'});
   if(g.stage===0)targets.push({type:'bypass',pos:g.valve_position,name:'Переключить клапан'});
   if(g.stage===1)targets.push({type:'finale',pos:g.beacon_position,name:'Аварийный пульт'},
     {type:'safe',pos:g.safe_position,name:'Архивный сейф'});
@@ -348,6 +457,7 @@ export class World{
  }
  hurt(){this.hurtUntil=this.elapsed+1;this.player.position.set(-2,0,21);this.velocity.set(0,0);this.cameraReady=false;}
  cameraStep(dt){
+  if(this.confession){this.confessionStep(dt);return;}
   if(this.reunion){this.reunionStep(dt);return;}
   if(this.floodCinematic){this.floodStep(dt);return;}
   const p=this.player.position;if(!this.inGame){this.player.visible=true;const target=new THREE.Vector3(31,29,48);this.camera.position.lerp(target,.06);this.camera.lookAt(0,1,0);this.cameraReady=false;return;}
@@ -374,14 +484,14 @@ export class World{
 
   this.cameraReady=true;
  }
- drawMap(){const c=document.getElementById('mini-map');if(!c||!this.game)return;const ctx=c.getContext('2d'),sx=x=>10+(x+36)*2.5,sz=z=>5+(z+27)*2.5;ctx.clearRect(0,0,200,146);ctx.fillStyle=this.game.stage===2?'#eff8f5':'#f7f8f2';ctx.fillRect(0,0,200,146);ctx.strokeStyle='#bdcac4';ctx.strokeRect(10,5,180,135);ctx.fillStyle='#a1b4ad';for(const [x,z,w,d] of this.game.walls)ctx.fillRect(sx(x-w/2),sz(z-d/2),Math.max(1,w*2.5),Math.max(1,d*2.5));ctx.fillStyle='#668174';ctx.font='8px system-ui';ctx.textAlign='center';for(const [n,x,z] of [['АРХИВ',-24,-24],['ТУРБИНЫ',24,-24],['МАСТЕРСКАЯ',-24,24],['ПУЛЬТ',-6,24]])ctx.fillText(n,sx(x),sz(z));const p=this.player.position;ctx.fillStyle='#c28a39';for(const q of this.game.epoch.clues)if((!q.requires||this.game.repairs.valve)&&Math.hypot(p.x-q.pos[0],p.z-q.pos[1])<8)ctx.fillRect(sx(q.pos[0])-2,sz(q.pos[1])-2,4,4);const goal=this.game.objective;
+ drawMap(){const c=document.getElementById('mini-map');if(!c||!this.game)return;const ctx=c.getContext('2d'),sx=x=>10+(x+36)*2.5,sz=z=>5+(z+27)*2.5;ctx.clearRect(0,0,200,146);ctx.fillStyle='#172327';ctx.fillRect(0,0,200,146);ctx.strokeStyle='#697774';ctx.strokeRect(10,5,180,135);ctx.fillStyle='#647471';for(const [x,z,w,d] of this.game.walls)ctx.fillRect(sx(x-w/2),sz(z-d/2),Math.max(1,w*2.5),Math.max(1,d*2.5));ctx.fillStyle='#bfcbc4';ctx.font='8px system-ui';ctx.textAlign='center';for(const [n,x,z] of [['АРХИВ',-24,-24],['ТУРБИНЫ',24,-24],['ДИСПЕТЧЕРСКАЯ',22,14],['МАСТЕРСКАЯ',-24,24],['ПУЛЬТ',-6,24]])ctx.fillText(n,sx(x),sz(z));const p=this.player.position;ctx.fillStyle='#c28a39';for(const q of this.game.epoch.clues)if((!q.requires||this.game.repairs.valve)&&Math.hypot(p.x-q.pos[0],p.z-q.pos[1])<8)ctx.fillRect(sx(q.pos[0])-2,sz(q.pos[1])-2,4,4);const goal=this.game.objective;
  if(goal&&(goal.stage===this.game.stage||goal.target[0]===this.game.portal?.position[0]&&goal.target[1]===this.game.portal?.position[1])){
   const [x,z]=goal.target;
-  ctx.strokeStyle='#ae5c25';ctx.lineWidth=1.4;ctx.beginPath();
+  ctx.strokeStyle='#f3bb64';ctx.lineWidth=1.4;ctx.beginPath();
   ctx.arc(sx(x),sz(z),5,0,Math.PI*2);ctx.stroke();
-  ctx.fillStyle='#b6652b';ctx.fillRect(sx(x)-1,sz(z)-1,2,2);
+  ctx.fillStyle='#f3bb64';ctx.fillRect(sx(x)-1,sz(z)-1,2,2);
  }
- ctx.fillStyle='#466d53';ctx.beginPath();ctx.arc(sx(0),sz(17),3,0,Math.PI*2);ctx.fill();if(this.game.flooded){ctx.fillStyle='#78aabd';ctx.fillRect(sx(-28),sz(-3),15,15);}ctx.save();ctx.translate(sx(p.x),sz(p.z));ctx.rotate(this.yaw);ctx.fillStyle='#1c6393';ctx.beginPath();ctx.moveTo(0,-5);ctx.lineTo(4,4);ctx.lineTo(0,2);ctx.lineTo(-4,4);ctx.closePath();ctx.fill();ctx.restore();}
+ ctx.fillStyle='#466d53';ctx.beginPath();if(this.game.npc_position){ctx.arc(sx(this.game.npc_position[0]),sz(this.game.npc_position[1]),3,0,Math.PI*2);ctx.fill();}if(this.game.flooded){ctx.fillStyle='#78aabd';ctx.fillRect(sx(-28),sz(-3),15,15);}ctx.save();ctx.translate(sx(p.x),sz(p.z));ctx.rotate(this.yaw);ctx.fillStyle='#8ed2ee';ctx.beginPath();ctx.moveTo(0,-5);ctx.lineTo(4,4);ctx.lineTo(0,2);ctx.lineTo(-4,4);ctx.closePath();ctx.fill();ctx.restore();}
  tick(){requestAnimationFrame(()=>this.tick());const dt=Math.min(this.clock.getDelta(),.15);if(this.active||this.key===undefined)this.elapsed+=dt;const t=this.elapsed;
   if(this.active&&this.game){
    const view=this.lookInput||{x:0,y:0};this.targetYaw+=view.x*1.0*dt;this.targetPitch=THREE.MathUtils.clamp(this.targetPitch+view.y*.7*dt,-.65,1.05);
@@ -407,8 +517,8 @@ export class World{
   if(this.game.repairs?.valve&&this.reserveWheel)this.reserveWheel.rotation.z=THREE.MathUtils.damp(this.reserveWheel.rotation.z,Math.PI/4,5,dt);
   animatePerson(this.player,dt,this.reunion?.motion?this.reunion.stepDistance||0:this.active?this.travelled:0,this.jumpAge);
   if(this.active&&this.jumpAge===null&&this.player.userData.rig?.footfalls>0)this.events.footstep?.();
-  animatePerson(this.npc,dt);
-  if(this.active&&this.npc.visible){const dx=this.player.position.x-this.npc.position.x,dz=this.player.position.z-this.npc.position.z;if(Math.hypot(dx,dz)<7){const face=Math.atan2(dx,dz),turn=Math.atan2(Math.sin(face-this.npc.rotation.y),Math.cos(face-this.npc.rotation.y));this.npc.rotation.y+=turn*(1-Math.exp(-dt*3.2));}}
+  if(this.departure)this.departureStep(dt);else animatePerson(this.npc,dt);
+  if(this.active&&this.npc.visible&&!this.departure){const dx=this.player.position.x-this.npc.position.x,dz=this.player.position.z-this.npc.position.z;if(Math.hypot(dx,dz)<7){const face=Math.atan2(dx,dz),turn=Math.atan2(Math.sin(face-this.npc.rotation.y),Math.cos(face-this.npc.rotation.y));this.npc.rotation.y+=turn*(1-Math.exp(-dt*3.2));}}
   for(const obj of this.pickups.values()){if(obj.userData.clueLabel)obj.userData.clueLabel.visible=Math.hypot(this.player.position.x-obj.position.x,this.player.position.z-obj.position.z)<9;}
   for(const rotor of this.machineRotors||[])rotor.rotation.y=t*(this.game.stage===2?.25:.045);for(const glow of this.machineLights||[])glow.material.emissiveIntensity=.55+Math.sin(t*.7)*.05;
   if(!this.floodCinematic&&this.motion!==false){for(let i=0;i<(this.lamps||[]).length;i++){const lamp=this.lamps[i];const blink=this.game?.stage===1&&Math.sin(t*2.1+i)>.9?.35:1;lamp.light.intensity=lamp.base*(.86+.14*Math.sin(t*(2+i*.3)+i))*blink;}}

@@ -1,7 +1,7 @@
 // Procedural station beds and cues. No external audio files.
 export function createSound() {
   let ctx, master, music, fx, bed, hum, air, noise;
-  let era = -1, listening = false;
+  let era = -1, listening = false, pressure = 0, alarm;
   const levels = {master: .35, music: .7, effects: .8};
 
   function ensure() {
@@ -39,6 +39,18 @@ export function createSound() {
   }
 
   function setListening(value) { listening = !!value; applyLevels(); }
+
+  function setPressure(level) {
+    if (level === pressure) return;
+    pressure = level;
+    if (alarm) { clearInterval(alarm); alarm = null; }
+    if (hum && era === 1) hum.frequency.setTargetAtTime(48 + level * 11, ctx.currentTime, .25);
+    if (level) {
+      const pulse = () => tone(level === 2 ? 505 : 345, .32, 'triangle', .075);
+      pulse();
+      alarm = setInterval(pulse, level === 2 ? 2200 : 5800);
+    }
+  }
 
   function stopBed() {
     if (bed) { try { bed.stop(); } catch (e) {} bed.disconnect(); bed = null; }
@@ -136,5 +148,5 @@ export function createSound() {
     music.gain.linearRampToValueAtTime(levels.music * (listening ? .2 : 1), ctx.currentTime + .8);
   }
 
-  return {ensure, setVolumes, setListening, playBed, cue, step, land, travel, duck, restore, stopBed};
+  return {ensure, setPressure, setVolumes, setListening, playBed, cue, step, land, travel, duck, restore, stopBed};
 }

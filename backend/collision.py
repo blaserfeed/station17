@@ -20,6 +20,23 @@ DRESSING = dict(
     signs=[(6.5, 8.4, .45), (-6.3, -8.6, -.35)],
     extinguishers=[(-10.15, -23.4, .35), (10.15, 23.3, 2.7), (-10.2, 5.6, -.15), (10.15, -7.4, 2.9)],
     plants=[(33.1, 20.2), (-33.2, -23.4)],
+    room_plants=[
+        (-34.5, -25.0),
+        (28.2, -25.2),
+        (18.0, 24.6),
+        (-34.0, 19.0),
+        (-6.2, -23.5),
+        (14.5, 22.5),
+    ],
+    paintings=[
+        (-24, -26.2, 0.0, 'archive'),
+        (24, -26.2, 0.0, 'turbine'),
+        (22, 26.2, 3.14159265, 'dispatch'),
+        (-22, 26.2, 3.14159265, 'workshop'),
+        (8, -26.2, 0.0, 'hall'),
+        (-11.55, -4, 1.5707963, 'hall_west'),
+        (11.55, -4, -1.5707963, 'hall_east'),
+    ],
 )
 LAYOUT = dict(desks=DESKS, chairs=CHAIRS, turbines=TURBINES, racks=ARCHIVE_RACKS,
               tanks=TANKS, planters=PLANTERS, dressing=DRESSING)
@@ -33,7 +50,7 @@ def circle(name, x, z, radius, top, *, bottom=0):
     return dict(name=name, x=x, z=z, radius=radius, top=top, bottom=bottom)
 
 
-def station_solids(walls, stage, safe_open):
+def station_solids(walls, stage, safe_open, sergey=True):
     # The layout also carries a few legacy map footprints used to place models.
     # Round machines and freestanding furniture use the sizes of their models here.
     props = {*DESKS, *TURBINES, *ARCHIVE_RACKS, (-28, -5)}
@@ -78,6 +95,10 @@ def station_solids(walls, stage, safe_open):
     if stage != 2:
         for x, z in DRESSING['plants']:
             solids.append(circle('planter', x, z, .48, .62))
+    for x, z in DRESSING['room_plants']:
+        solids.append(circle('planter', x, z, .48, .62))
+    for x, z, yaw, _slot in DRESSING['paintings']:
+        solids.append(rectangle('painting', x, z, 1.35, .1, 2.05, bottom=1.05, yaw=yaw))
     for x in (-10.8, 10.8):
         for z in range(-24, 25, 12):
             solids.append(rectangle('column', x, z, .7, .7, 8.45))
@@ -87,7 +108,8 @@ def station_solids(walls, stage, safe_open):
     for x in (-24, 24):
         solids.append(rectangle('ceiling', x, 0, 24, 54, 4.24, bottom=4))
     solids.append(rectangle('west-lintel', -25, 0, 6, .7, 3.925, bottom=3.275))
-    solids.append(circle('sergey', *NPC, .47, 1.83))
+    if sergey:
+        solids.append(circle('sergey', *NPC, .47, 1.83))
     for side in (-1,1):
         solids.append(rectangle('portal-column', PORTAL[0]+side*1.55, PORTAL[1], .46, .75, 3.8))
     solids.append(rectangle('portal-console', *PORTAL_CONSOLE, .7, .56, 1.25))

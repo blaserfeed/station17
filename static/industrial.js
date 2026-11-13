@@ -254,7 +254,7 @@ export function valveBank(parent, pos, era, repaired) {
   return p;
 }
 
-export function emergencyConsole(parent, pos, future, ready) {
+export function emergencyConsole(parent, pos, future, ready, worn = false) {
   const p = groupAt(parent, pos);
   p.name = 'emergency-console';
   const enamel = metal(future ? 0xc4d6d3 : 0x647d77, .58);
@@ -274,6 +274,10 @@ export function emergencyConsole(parent, pos, future, ready) {
     emissive: ready ? 0x60b68a : 0xbf7132, emissiveIntensity: .6});
   cylinder(rack, .076, .024, [.19, .2, .14], indicator);
   for (let i = 0; i < 5; i++) casing(rack, [.056, .02, .08], [-.18 + i * .083, .2, -.15], copper, .01);
+  if (worn) {
+    for (const x of [-.28, -.08, .12]) casing(rack, [.05, .016, .04], [x, .205, .2], metal(0x5c4e3d, .75), .008);
+    casing(rack, [.46, .004, .12], [-.16, .188, .04], metal(0x2e3430, .85), .002);
+  }
   pipe(p, [[.35, .12, -.18], [.53, .05, -.58], [1.32, .035, -.67]], .036, steel, .23);
   return p;
 }
@@ -385,6 +389,9 @@ export function dressing(parent, era, layout = {}) {
   pipe(parent, [[8, 3.2, -21], [8, 3.2, 21]], .032, steel, .25);
   if (era !== 2) {
     for(const [i,[x,z]] of (layout.plants || [[33.1,20.2],[-33.2,-23.4]]).entries())plant(parent,x,z,era+2+i*2);
+  }
+  for (const [i, [x, z]] of (layout.room_plants || [[-34.5,-25],[28.2,-25.2],[18,24.6],[-34,19],[-6.2,-23.5],[14.5,22.5]]).entries()) {
+    plant(parent, x, z, era + 4 + i);
   }
 }
 

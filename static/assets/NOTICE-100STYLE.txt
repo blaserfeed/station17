@@ -1,0 +1,12 @@
+100STYLE Dataset
+Ian Mason, Sebastian Starke, and Taku Komura (2022)
+Real-Time Style Modelling of Human Locomotion via Feature-Wise
+Transformations and Local Motion Phases.
+https://doi.org/10.1145/3522618
+Original dataset: https://zenodo.org/records/8127870
+Licence: Creative Commons Attribution 4.0 International
+https://creativecommons.org/licenses/by/4.0/
+
+TIMELESS adapts samples from Neutral_FW.bvh and Neutral_FR.bvh.
+The samples are cropped to one cycle, resampled, phase-aligned to the
+existing lower-body animation and adapted to the character's skeleton.

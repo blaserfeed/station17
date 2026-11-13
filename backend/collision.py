@@ -78,10 +78,11 @@ def station_solids(walls, stage, safe_open, sergey=True):
     for x, z in CHAIRS:
         solids.append(rectangle('chair', x, z, .57, .65, 1.04))
     for x, z in ARCHIVE_RACKS:
-        solids.append(rectangle('archive-rack', x + .06, z, 1.07, 4.30, 2.41))
+        depth = 3.44 if z == -10 and x < -25 else 4.2
+        solids.append(rectangle('archive-rack', x, z, .85, depth, 2.44))
     for x, z in TANKS:
         solids.append(circle('tank', x, z, .88, 3.07))
-        solids.append(circle('tank-pipe', x, z + 3.3, .14, 3.58, bottom=1.2))
+        solids.append(circle('tank-pipe', x, z + 3.3, .26, 3.61))
     for x, z, yaw in DRESSING['crates']:
         solids.append(rectangle('storage-crates', x, z, .72, .56, .81, yaw=yaw))
     for x, z in DRESSING['barrels']:
@@ -114,9 +115,10 @@ def station_solids(walls, stage, safe_open, sergey=True):
         solids.append(rectangle('portal-column', PORTAL[0]+side*1.55, PORTAL[1], .46, .75, 3.8))
     solids.append(rectangle('portal-console', *PORTAL_CONSOLE, .7, .56, 1.25))
     if stage == 1:
-        solids.append(rectangle('fuse-case', *PORTAL_FUSE, .65, .45, .53))
+        solids.append(rectangle('fuse-case', *PORTAL_FUSE, .65, .45, .59))
+        solids.append(rectangle('pass-stand', 3, 25, .78, .71, .98))
 
-    solids.append(rectangle('valve', VALVE[0], VALVE[1] - .08, 2.72, .90, 2.47))
+    solids.append(rectangle('valve', VALVE[0], VALVE[1] - .09, 2.72, 1.01, 2.53))
     solids.append(rectangle('emergency-console', BEACON[0], BEACON[1] - .055, 1.57, .86, 1.90))
     if stage == 1:
         solids.append(rectangle('safe', *SAFE, 1.65, .93, 2))

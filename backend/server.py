@@ -48,7 +48,7 @@ class GameServer(ThreadingHTTPServer):
   self.db_path=str(db_path);self.secret=secret;init_db(db_path);super().__init__(address,Handler)
 
 class Handler(BaseHTTPRequestHandler):
- server_version='Station17/4.0'
+ server_version='Timeless/4.0'
  def log_message(self,fmt,*args):pass
  def send_json(self,value,status=200,cookie=None):
   raw=json.dumps(value,ensure_ascii=False).encode();self.send_response(status)
@@ -141,10 +141,10 @@ class Handler(BaseHTTPRequestHandler):
   except (BrokenPipeError,ConnectionResetError):pass
 
 def main():
- parser=argparse.ArgumentParser(description='Локальная игра Станция 17');parser.add_argument('--open',action='store_true',help='Открыть браузер после запуска');parser.add_argument('--port',type=int,default=8765);parser.add_argument('--db',default=str(ROOT/'data/game.sqlite3'));args=parser.parse_args()
+ parser=argparse.ArgumentParser(description='Локальная игра TIMELESS');parser.add_argument('--open',action='store_true',help='Открыть браузер после запуска');parser.add_argument('--port',type=int,default=8765);parser.add_argument('--db',default=str(ROOT/'data/game.sqlite3'));args=parser.parse_args()
  secret_path=Path(args.db).with_suffix('.secret');secret_path.parent.mkdir(parents=True,exist_ok=True)
  if not secret_path.exists():secret_path.write_bytes(secrets.token_bytes(32));secret_path.chmod(0o600)
- server=GameServer(('127.0.0.1',args.port),args.db,secret_path.read_bytes());print(f'Станция 17: http://127.0.0.1:{server.server_port}',flush=True)
+ server=GameServer(('127.0.0.1',args.port),args.db,secret_path.read_bytes());print(f'TIMELESS: http://127.0.0.1:{server.server_port}',flush=True)
  if args.open:threading.Timer(.5,lambda:webbrowser.open(f'http://127.0.0.1:{server.server_port}')).start()
  try:server.serve_forever()
  except KeyboardInterrupt:pass

@@ -1,0 +1,39 @@
+{
+  "run_at": "2026-11-13T20:48:23.222Z",
+  "views": [
+    "hall",
+    "archive",
+    "workshop",
+    "tanks",
+    "control",
+    "monitor",
+    "valve",
+    "museum-bench",
+    "passage",
+    "windows",
+    "roof",
+    "yard",
+    "reservoir"
+  ],
+  "report": [
+    {
+      "year": 2026,
+      "calls": 46,
+      "triangles": 149672,
+      "geometries": 414
+    },
+    {
+      "year": 1978,
+      "calls": 46,
+      "triangles": 147232,
+      "geometries": 387
+    },
+    {
+      "year": 2074,
+      "calls": 45,
+      "triangles": 146204,
+      "geometries": 424
+    }
+  ],
+  "pageErrors": []
+}

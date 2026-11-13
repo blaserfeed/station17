@@ -1,21 +1,17 @@
-export const WALK_SPEED = 3.5;
-export const RUN_SPEED = 6.5;
-export const WALK_CYCLE = 1.5;
-export const RUN_CYCLE = 2.35;
-// Each bundled clip contains TWO complete gait cycles (four footfalls).
-// These are clip seconds, independent of the player's travel speed.
-export const WALK_CLIP_SECONDS = 26 / 15;
-export const RUN_CLIP_SECONDS = 4 / 3;
+export const WALK_SPEED = 2.12;
+export const RUN_SPEED = 3.82;
+// The gait phase covers two full cycles, or four steps.
+export const WALK_CYCLE_SECONDS = 2 * 1.12 * 1.9 / WALK_SPEED;
+export const RUN_CYCLE_SECONDS = 2 * 1.04 * 3.45 / RUN_SPEED;
 export const CLIP_FOOTFALLS = 4;
 
-export function gaitAdvance(dt, distance, running, walkSeconds=WALK_CLIP_SECONDS, runSeconds=RUN_CLIP_SECONDS) {
+export function gaitAdvance(dt, distance, running, walkSeconds=WALK_CYCLE_SECONDS, runSeconds=RUN_CYCLE_SECONDS) {
  if(dt<=0||distance<=.0005)return 0;
  const blend=Math.max(0,Math.min(1,running));
  const seconds=walkSeconds+(runSeconds-walkSeconds)*blend;
  const travelSpeed=WALK_SPEED+(RUN_SPEED-WALK_SPEED)*blend;
- // Allow a gentle response to acceleration, without speeding up a full clip
- // several times simply because the player covers more game-world metres.
- const rate=Math.min(1.05,distance/dt/travelSpeed);
+ // Match the travelled distance during acceleration, capped at the clip rate.
+ const rate=Math.min(1,distance/dt/travelSpeed);
  return dt*rate/seconds;
 }
 

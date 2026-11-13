@@ -24,7 +24,9 @@ function groundHeight(x, z) {
   let height = wave * 1.8 * smooth(.85, 1.7, Math.hypot(x / 80, (z + 6) / 72));
   if (z < -48) height = Math.min(height, -smooth(-48, -64, z) * 1.7);
   if (pad < 1.05) height = Math.min(height, (pad - .2) * .35);
-  return height - .78;
+  const bank = smooth(-98, -118, z);
+  const crest = 4 + Math.abs(Math.sin(x * .018)) * 16 + Math.cos(x * .041) * 4;
+  return mix(height - .78, crest, bank);
 }
 
 function place(mesh, count, write) {
@@ -73,22 +75,15 @@ export function buildGrounds(parent, stage, quality = 1) {
   ground.receiveShadow = true;
   ground.castShadow = false;
   parent.add(ground);
-
-  const ridgeGeo = new THREE.PlaneGeometry(300, 78, Math.max(12, seg), 8);
-  ridgeGeo.rotateX(-Math.PI / 2);
-  const ridgePos = ridgeGeo.attributes.position;
-  for (let i = 0; i < ridgePos.count; i++) {
-    const x = ridgePos.getX(i);
-    const z = ridgePos.getZ(i);
-    const crest = Math.abs(Math.sin(x * .018)) * 16 + Math.cos(x * .041) * 6 + (1 - Math.abs(z) / 39) * 10;
-    ridgePos.setY(i, Math.max(0, crest));
+  ground.updateMatrixWorld(true);
+  // Match the rendered triangles at every quality level, including coarse slopes.
+  const groundRay = new THREE.Raycaster();
+  const down = new THREE.Vector3(0, -1, 0);
+  function renderedGround(x, z) {
+    groundRay.ray.origin.set(x, 40, z);
+    groundRay.ray.direction.copy(down);
+    return groundRay.intersectObject(ground, false)[0]?.point.y ?? groundHeight(x, z);
   }
-  ridgeGeo.computeVertexNormals();
-  const ridge = new THREE.Mesh(ridgeGeo, surfaceMaterial('earth', stage, [4, 1], 0));
-  ridge.position.set(0, -1, -102);
-  ridge.castShadow = false;
-  ridge.receiveShadow = false;
-  parent.add(ridge);
 
   const waterMat = surfaceMaterial('water', stage, [6, 2], quality);
   waterMat.transparent = true;
@@ -104,8 +99,8 @@ export function buildGrounds(parent, stage, quality = 1) {
 
   const concrete = surfaceMaterial('floor', stage, [3, 1], quality);
   for (const [w, d, x, z] of [[78, 2.4, 0, 28.7], [78, 2.4, 0, -28.7], [2.2, 56, 37.5, 0], [2.2, 56, -37.5, 0]]) {
-    const apron = new THREE.Mesh(new THREE.BoxGeometry(w, .16, d), concrete);
-    apron.position.set(x, -.16, z);
+    const apron = new THREE.Mesh(new THREE.BoxGeometry(w, .72, d), concrete);
+    apron.position.set(x, -.44, z);
     apron.castShadow = false;
     apron.receiveShadow = true;
     parent.add(apron);
@@ -139,12 +134,16 @@ export function buildGrounds(parent, stage, quality = 1) {
       x = (next() - .5) * 200;
       z = (next() - .5) * 150;
       const inside = Math.abs(x) < 42 && Math.abs(z) < 34;
-      const waterlogged = z < -64;
+      const waterlogged = z < -53;
       const inCamera = x > 18 && z > 36;
       if (!inside && !waterlogged && !inCamera) break;
     }
+    if ((Math.abs(x) < 42 && Math.abs(z) < 34) || z < -53 || (x > 18 && z > 36)) {
+      x = -51 - next() * 26;
+      z = -45 + next() * 76;
+    }
     const scale = .75 + next() * (stage === 2 ? .7 : 1.15);
-    dummy.position.set(x, groundHeight(x, z) + scale * 1.05, z);
+    dummy.position.set(x, renderedGround(x, z) + scale * 1.02, z);
     dummy.scale.set(scale, scale, scale);
     dummy.rotation.set(0, next() * Math.PI, 0);
   });
@@ -182,7 +181,7 @@ export function buildGrounds(parent, stage, quality = 1) {
     const side = rockRand() > .5 ? 1 : -1;
     const x = side * (46 + rockRand() * 50);
     const z = (rockRand() - .5) * 90;
-    dummy.position.set(x, groundHeight(x, z) + .2, z);
+    dummy.position.set(x, renderedGround(x, z) + .12, z);
     dummy.scale.set(1 + rockRand(), .45 + rockRand() * .4, 1 + rockRand());
     dummy.rotation.set(rockRand(), rockRand() * 3, rockRand());
   });
@@ -199,7 +198,7 @@ export function buildGrounds(parent, stage, quality = 1) {
     const side = shrubRand() > .5 ? 1 : -1;
     const x = side * (40 + shrubRand() * 4);
     const z = (shrubRand() - .5) * 48;
-    dummy.position.set(x, groundHeight(x, z) + .2, z);
+    dummy.position.set(x, renderedGround(x, z) + .12, z);
     dummy.scale.set(1.2, .7, 1.1);
   });
   parent.add(shrubs);

@@ -1,3 +1,4 @@
+import {defaults,loadBindings,saveBindings,canBind} from './keybindings.js';
 import {OfflineVoice} from './speech.js';
 export const GESTURES={Closed_Fist:'left',Victory:'right',Thumb_Up:'forward',Thumb_Down:'back',Open_Palm:'stop',Pointing_Up:'interact',ILoveYou:'jump'};
 const VOICE_MAP={'влево':'left','налево':'left','вправо':'right','направо':'right','вперед':'forward','назад':'back','стой':'stop','стоп':'stop','остановись':'stop','прыжок':'jump','прыгни':'jump','действие':'interact','взаимодействовать':'interact','пауза':'pause','продолжить':'resume','подсказка':'hint','журнал':'journal','первый вариант':'choice1','вариант один':'choice1','второй вариант':'choice2','вариант два':'choice2','третий вариант':'choice3','вариант три':'choice3','поддержать сергея':'empathize','спросить сергея':'ask','показать свидетельства':'evidence','начать':'start','повторить':'retry','сменить вид':'view','прибор':'travel','портал':'travel','проверить цепь':'circuit-check','проверить':'circuit-check','камера влево':'look-left','камера вправо':'look-right','камера вверх':'look-up','камера вниз':'look-down','камера стоп':'look-stop','посмотри влево':'look-left','посмотри вправо':'look-right','посмотри вверх':'look-up','посмотри вниз':'look-down'};
@@ -58,13 +59,49 @@ export class TwoHandController{
  }
 }
 export class Controls{
- constructor(onAction,onStatus){this.onAction=onAction;this.onStatus=onStatus;this.keys=new Set();this.voiceMotion=null;this.voiceUntil=0;this.gestureMotion=null;this.hands=new TwoHandController();this.gate=this.hands.movement;this.movementHand=localStorage.getItem('station17-movement-hand')==='Right'?'Right':'Left';this.gestureLook={x:0,y:0};this.gestureLookUntil=0;this.gestureMotionUntil=0;this.voiceLook={x:0,y:0};this.voiceLookUntil=0;this.generation=0;this.speech=null;this.listening=false;this.cameraOn=false;this.worker=null;this.stream=null;this.framePending=false;this.lastFrame=0;
-  addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName))return;if([' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();this.keys.add(e.key.toLowerCase());if(e.repeat)return;const cmd={' ':'jump',e:'interact',Escape:'pause',j:'journal',h:'hint','1':'choice1','2':'choice2','3':'choice3','4':'choice4','5':'choice5','6':'choice6','7':'choice7','8':'choice8','9':'choice9',m:'microphone',g:'gestures',v:'view',r:'travel',f:'circuit-check',Enter:'confirm'}[e.key.length===1?e.key.toLowerCase():e.key]||{'у':'interact','о':'journal','р':'hint','м':'view','к':'travel','а':'circuit-check','ь':'microphone','п':'gestures'}[e.key.toLowerCase()];if(cmd){if(cmd==='confirm')e.preventDefault();this.onAction(cmd,'keyboard');}});
-  addEventListener('keyup',e=>this.keys.delete(e.key.toLowerCase()));addEventListener('blur',()=>this.resetMotion());document.addEventListener('visibilitychange',()=>{if(document.hidden){this.resetMotion();this.stopVoice();this.stopCamera();}});
+ constructor(onAction,onStatus){this.onAction=onAction;this.onStatus=onStatus;this.keys=new Set();this.bindings=loadBindings();this.captureKey=null;this.voiceMotion=null;this.voiceUntil=0;this.gestureMotion=null;this.hands=new TwoHandController();this.gate=this.hands.movement;this.movementHand=localStorage.getItem('timeless-movement-hand')==='Right'?'Right':'Left';this.gestureLook={x:0,y:0};this.gestureLookUntil=0;this.gestureMotionUntil=0;this.voiceLook={x:0,y:0};this.voiceLookUntil=0;this.generation=0;this.speech=null;this.listening=false;this.cameraOn=false;this.worker=null;this.stream=null;this.framePending=false;this.lastFrame=0;
+  addEventListener('keydown',e=>{
+   if(this.captureKey){
+    if(!canBind(e))return;
+    e.preventDefault();
+    if(e.repeat)return;
+    const action=this.captureKey;
+    this.captureKey=null;
+    const previous=this.bindings[action];
+    const conflict=Object.keys(this.bindings).find(key=>this.bindings[key]===e.code);
+    if(conflict)this.bindings[conflict]=previous;
+    this.bindings[action]=e.code;
+    saveBindings(this.bindings);
+    this.onAction('binding-changed','keyboard');
+    return;
+   }
+   if(e.metaKey||e.ctrlKey||e.altKey||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
+   const action=this.boundAction(e.code);
+   if(!action)return;
+   if(e.target?.matches?.('button,a,summary')&&['Enter','Space'].includes(e.code))return;
+   e.preventDefault();
+   this.keys.add(action);
+   if(!e.repeat&&!['forward','back','left','right','sprint'].includes(action))this.onAction(action,'keyboard');
+  });
+  addEventListener('keyup',e=>this.keys.delete(this.boundAction(e.code)));
+  addEventListener('blur',()=>this.resetMotion());document.addEventListener('visibilitychange',()=>{if(document.hidden){this.resetMotion();this.stopVoice();this.stopCamera();}});
  }
- motion(){if(this.keys.size){const x=Number(this.keys.has('d')||this.keys.has('в')||this.keys.has('arrowright'))-Number(this.keys.has('a')||this.keys.has('ф')||this.keys.has('arrowleft'));const z=Number(this.keys.has('s')||this.keys.has('ы')||this.keys.has('arrowdown'))-Number(this.keys.has('w')||this.keys.has('ц')||this.keys.has('arrowup'));if(x||z)return {x,z,source:'keyboard'};}const now=performance.now(),voiceOn=!!this.voiceMotion&&this.voiceMotion!=='stop'&&now<this.voiceUntil,gestureOn=!!this.gestureMotion&&this.gestureMotion!=='stop'&&now<this.gestureMotionUntil;if(this.cameraOn&&gestureOn)return {x:this.gestureMotion==='left'?-1:this.gestureMotion==='right'?1:0,z:this.gestureMotion==='forward'?-1:this.gestureMotion==='back'?1:0,source:'gesture'};if(voiceOn)return {x:this.voiceMotion==='left'?-1:this.voiceMotion==='right'?1:0,z:this.voiceMotion==='forward'?-1:this.voiceMotion==='back'?1:0,source:'voice'};return {x:0,z:0,source:'keyboard'};}
+ boundAction(code){
+  const exact=Object.keys(this.bindings).find(action=>this.bindings[action]===code);
+  if(exact)return exact;
+  const arrows={ArrowUp:'forward',ArrowDown:'back',ArrowLeft:'left',ArrowRight:'right',ShiftRight:'sprint'};
+  const action=arrows[code];
+  return this.bindings[action]===defaults[action]?action:undefined;
+ }
+ resetBindings(){
+  this.captureKey=null;
+  this.bindings={...defaults};
+  saveBindings(this.bindings);
+  this.resetMotion();
+ }
+ motion(){if(this.keys.size){const x=Number(this.keys.has('right'))-Number(this.keys.has('left'));const z=Number(this.keys.has('back'))-Number(this.keys.has('forward'));if(x||z)return {x,z,source:'keyboard'};}const now=performance.now(),voiceOn=!!this.voiceMotion&&this.voiceMotion!=='stop'&&now<this.voiceUntil,gestureOn=!!this.gestureMotion&&this.gestureMotion!=='stop'&&now<this.gestureMotionUntil;if(this.cameraOn&&gestureOn)return {x:this.gestureMotion==='left'?-1:this.gestureMotion==='right'?1:0,z:this.gestureMotion==='forward'?-1:this.gestureMotion==='back'?1:0,source:'gesture'};if(voiceOn)return {x:this.voiceMotion==='left'?-1:this.voiceMotion==='right'?1:0,z:this.voiceMotion==='forward'?-1:this.voiceMotion==='back'?1:0,source:'voice'};return {x:0,z:0,source:'keyboard'};}
  lookMotion(){const now=performance.now();if(now<this.voiceLookUntil)return this.voiceLook;if(this.cameraOn&&now<this.gestureLookUntil)return this.gestureLook;return {x:0,y:0};}
- swapHands(){this.movementHand=this.movementHand==='Left'?'Right':'Left';localStorage.setItem('station17-movement-hand',this.movementHand);this.hands.reset();this.resetMotion();this.showHandRoles();}
+ swapHands(){this.movementHand=this.movementHand==='Left'?'Right':'Left';localStorage.setItem('timeless-movement-hand',this.movementHand);this.hands.reset();this.resetMotion();this.showHandRoles();}
  showHandRoles(){const r=document.getElementById('gesture-roles');if(r)r.textContent=this.movementHand==='Left'?'Левая — персонаж · правая — камера':'Правая — персонаж · левая — камера';}
  resetMotion(){this.gestureLook={x:0,y:0};this.gestureLookUntil=0;this.voiceLookUntil=0;this.gestureMotionUntil=0;this.hands.reset();this.keys.clear();this.voiceMotion=null;this.voiceUntil=0;this.gestureMotion=null;}
  command(cmd,source){if(cmd.startsWith('look-')){this.voiceLook={x:cmd==='look-left'?-1:cmd==='look-right'?1:0,y:cmd==='look-up'?-1:cmd==='look-down'?1:0};this.voiceLookUntil=cmd==='look-stop'?0:performance.now()+1600;this.onAction(cmd,source);return;}if(cmd==='stop'&&source==='voice'){this.voiceLookUntil=0;this.gestureLook={x:0,y:0};}if(cmd==='stop'){this.voiceUntil=0;this.voiceMotion=null;this.gestureMotion=null;}if(['left','right','forward','back','stop'].includes(cmd)){if(source==='voice'&&cmd!=='stop'){this.voiceMotion=cmd;this.voiceUntil=Infinity;}this.onAction('navigate-'+cmd,source);}else this.onAction(cmd,source);}

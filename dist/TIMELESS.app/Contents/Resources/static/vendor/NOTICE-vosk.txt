@@ -1,4 +1,0 @@
-vosk-browser 0.0.8 by ccoreilly and contributors, Apache-2.0
-Source: https://github.com/ccoreilly/vosk-browser
-Local modification in Station 17: worker uses in-memory FS instead of IndexedDB; model and recognizer remain unchanged.
-Russian acoustic model: Alpha Cephei vosk-model-small-ru-0.22, Apache-2.0. Original model README included.

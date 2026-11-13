@@ -78,8 +78,7 @@ export class StationCollision {
     }
   }
 
-  cameraLimit(origin, direction, maxDistance) {
-    const margin = .19;
+  cameraLimit(origin, direction, maxDistance, {margin = .19, ignoreAtEnd = 0} = {}) {
     let nearest = maxDistance;
     for (const shape of this.solids) {
       const dx = origin.x - shape.x, dz = origin.z - shape.z;
@@ -110,7 +109,9 @@ export class StationCollision {
         entry = Math.max(entry, u[0], v[0]);
         exit = Math.min(exit, u[1], v[1]);
       }
-      if (entry <= exit) nearest = entry;
+      const targetSupport = ignoreAtEnd && exit >= maxDistance - ignoreAtEnd &&
+        !['wall','column','west-lintel','flood','ceiling'].includes(shape.name);
+      if (entry <= exit && !targetSupport) nearest = entry;
     }
     return nearest;
   }

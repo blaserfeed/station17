@@ -20,7 +20,7 @@ const path=require('node:path');
    const after=await page.evaluate(()=>({at:performance.now(),position:chronoshov.world.position(),running:chronoshov.world.player.userData.rig.running,phase:chronoshov.world.player.userData.rig.phase}));
    await page.keyboard.up('w');if(run)await page.keyboard.up('Shift');
    const speed=(before.position[1]-after.position[1])/((after.at-before.at)/1000);
-   assert(speed>(run?5.5:3),`Observed ${run?'running':'walking'} speed ${speed.toFixed(3)} m/s: ${JSON.stringify({before,after})}`);assert(run?after.running>.9:after.running<.1);
+   assert(speed>(run?3.2:1.8)&&speed<(run?4:2.3),`Observed ${run?'running':'walking'} speed ${speed.toFixed(3)} m/s: ${JSON.stringify({before,after})}`);assert(run?after.running>.9:after.running<.1);
    measurements.push({mode:run?'run':'walk',speed,...after});
    await page.waitForFunction(()=>chronoshov.world.velocity.length()<.02);
    const stoppedPhase=await page.evaluate(()=>chronoshov.world.player.userData.rig.phase);
@@ -29,6 +29,6 @@ const path=require('node:path');
   }
   assert.deepEqual(errors,[]);
   fs.writeFileSync(path.join(__dirname,'../reports/locomotion-current.json'),JSON.stringify({run_at:new Date().toISOString(),measurements,pageErrors:errors},null,2));
-  console.log('PASS faster walking, distinct running animation and stable idle',measurements);
+  console.log('PASS calibrated walking, distinct running animation and stable idle',measurements);
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

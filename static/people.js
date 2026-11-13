@@ -1,6 +1,8 @@
 import * as THREE from './vendor/three.module.js';
+import {upperBodyClips} from './100style-upper-body.js';
+import {gaitClips} from './quaternius-gait.js';
 import { GLTFLoader } from './vendor/GLTFLoader.js';
-import {WALK_SPEED,RUN_SPEED,WALK_CYCLE,RUN_CYCLE,gaitAdvance,CLIP_FOOTFALLS} from './locomotion.js';
+import {WALK_SPEED,RUN_SPEED,gaitAdvance,CLIP_FOOTFALLS,WALK_CYCLE_SECONDS,RUN_CYCLE_SECONDS} from './locomotion.js';
 export {WALK_SPEED,RUN_SPEED} from './locomotion.js';
 
 const loader = new GLTFLoader();
@@ -193,8 +195,8 @@ function naturalArms(scene, upperSwing, influence, rest, running = 0, stand = nu
       toWorld(_sceneQ,0,0,1,twist);aimLimb(bone,dir,twist,influence);
     }
   };
-  const amplitude=THREE.MathUtils.lerp(.45,.70,running);
-  const flex=THREE.MathUtils.lerp(.12,.95,running);
+  const amplitude=THREE.MathUtils.lerp(.52,.69,running);
+  const flex=THREE.MathUtils.lerp(.23,.76,running);
   for(const [side,sign] of [['l',1],['r',-1]]){
     const shoulder=upperSwing*amplitude*sign;
     const elbow=shoulder+flex;
@@ -279,9 +281,12 @@ function placeLeg(scene, side, step, influence, stand, sceneQ) {
   if (!spec || !thigh || !calf || !foot) return;
   thigh.getWorldPosition(_hip);
   const place = stance(spec);
-  _ankle.set((side === 'l' ? 1 : -1) * place.x, spec.footY + step.y, step.z);
+  const sign = side === 'l' ? 1 : -1;
+  _ankle.set(step.x ?? sign * place.x, spec.footY + step.y, step.z);
   scene.localToWorld(_ankle);
-  _pole.set(side === 'l' ? 0.08 : -0.08, 0.15, 1).applyQuaternion(sceneQ).add(_hip);
+  _span.subVectors(_ankle, _hip).clampLength(0, spec.upper + spec.lower - .001);
+  _ankle.copy(_hip).add(_span);
+  _pole.set(sign * .02, 0, 1).applyQuaternion(sceneQ).add(_hip);
   solveKnee(_hip, _ankle, spec.upper, spec.lower, _pole, _knee);
   aimFromStand(thigh, stand.bones[`thigh_${side}`], spec.thighDir, _want.subVectors(_knee, _hip), sceneQ, influence);
   calf.getWorldPosition(_knee);
@@ -293,7 +298,7 @@ function placeLeg(scene, side, step, influence, stand, sceneQ) {
     foot.updateMatrixWorld(true);
   }
   pitchFoot(foot, stand.bones[`foot_${side}`], step.pitch, sceneQ, influence);
-  yawToes(foot, side, sceneQ, influence, place.yaw);
+  yawToes(foot, side, sceneQ, influence, step.yaw ?? place.yaw);
 }
 
 function closedStance(scene, stand) {
@@ -322,7 +327,7 @@ function captureStand(scene) {
   scene.updateMatrixWorld(true);
   const bones = {};
   const worldQ = new THREE.Quaternion();
-  for (const name of ['spine_01', 'spine_02', 'neck_01', 'head', 'thigh_l', 'calf_l', 'foot_l', 'thigh_r', 'calf_r', 'foot_r', 'upperarm_l', 'lowerarm_l', 'hand_l', 'upperarm_r', 'lowerarm_r', 'hand_r']) {
+  for (const name of ['pelvis', 'spine_01', 'spine_02', 'neck_01', 'head', 'thigh_l', 'calf_l', 'foot_l', 'thigh_r', 'calf_r', 'foot_r', 'upperarm_l', 'lowerarm_l', 'hand_l', 'upperarm_r', 'lowerarm_r', 'hand_r']) {
     const bone = scene.getObjectByName(name);
     if (!bone) continue;
     bone.getWorldQuaternion(worldQ);
@@ -346,6 +351,8 @@ function captureStand(scene) {
       lower: knee.distanceTo(ankle),
       ankleFromCalf: calf.worldToLocal(ankle.clone()),
       footX: local.x,
+      footZ: local.z,
+      hip: scene.worldToLocal(hip.clone()),
       footY: local.y,
       thighDir: knee.clone().sub(hip).normalize(),
       calfDir: ankle.clone().sub(knee).normalize(),
@@ -358,7 +365,9 @@ function captureStand(scene) {
     arms[side]={upperDir:knee.clone().sub(hip).normalize(),lowerDir:ankle.clone().sub(knee).normalize()};
   }
   const pelvis = scene.getObjectByName('pelvis');
-  return {bones, legs, arms, pelvis: pelvis ? pelvis.position.clone() : null};
+  const pelvisCenter = scene.worldToLocal(pelvis.getWorldPosition(new THREE.Vector3()));
+  for (const leg of Object.values(legs)) leg.hip.sub(pelvisCenter);
+  return {bones, legs, arms, pelvisCenter};
 }
 
 export function makeJumpClip(scene) {
@@ -592,6 +601,11 @@ export function person(name) {
       const feet = new THREE.Box3().setFromObject(scene, true).min.y;
       root.userData.rig.idleOffset = Math.abs(feet) < .18 ? .02 - feet : 0;
       scene.position.y = root.userData.rig.idleOffset;
+      if (name === 'anna') {
+        Object.assign(root.userData.rig, {
+          walkPose: [], runPose: [], walkUpper: [], runUpper: [], footPose: {l:{yaw:.022},r:{yaw:.022}},
+        });
+      }
       root.add(scene);
       return root;
     })
@@ -629,6 +643,100 @@ export function animateArrival(root,dt,progress) {
   naturalArms(scene,-swing*.45,1,rig.rest,0,rig.stand);
 }
 
+function sampleGait(frames, phase, out) {
+  const index = phase * frames.length;
+  const frame = Math.floor(index);
+  const from = frames[frame % frames.length];
+  const to = frames[(frame + 1) % frames.length];
+  for (let i = 0; i < from.length; i++) out[i] = THREE.MathUtils.lerp(from[i], to[i], index - frame);
+}
+
+function retargetAnna(rig, grounded) {
+  if (grounded < .02) return;
+  const {scene, stand, running, movement} = rig;
+  const blend = THREE.MathUtils.lerp;
+  const phase = (rig.phase * 2) % 1;
+  const walk = rig.walkPose, run = rig.runPose;
+  sampleGait(gaitClips.walk.samples, phase, walk);
+  sampleGait(gaitClips.run.samples, phase, run);
+  const {walkUpper, runUpper} = rig;
+  sampleGait(upperBodyClips.walk, phase, walkUpper);
+  sampleGait(upperBodyClips.run, phase, runUpper);
+  scene.updateWorldMatrix(true, true);
+  scene.getWorldQuaternion(_sceneQ);
+  const pelvis = scene.getObjectByName('pelvis');
+  const sway = blend(walk[0] - .004, run[0], running) * .55 * movement;
+  const pelvisZ = stand.pelvisCenter.z;
+  let pelvisY = stand.pelvisCenter.y + blend((walk[1] - .915) * .85, (run[1] - .93) * .43, running) * movement;
+  const feet = rig.footPose;
+  for (const [side, index] of [['l', 4], ['r', 10]]) {
+    const spec = stand.legs[side];
+    const foot = feet[side];
+    const sign = side === 'l' ? 1 : -1;
+    foot.x = blend(sign * .095, blend(walk[index], run[index], running), movement);
+    foot.z = spec.footZ + blend((walk[index + 2] + .075) * 1.14, (run[index + 2] + .110) * .72, running) * movement;
+    const shoePitch = blend(walk[index + 3] + .54, run[index + 3] + .54, running);
+    foot.pitch = -THREE.MathUtils.clamp(shoePitch * .64, -.68, .38) * movement;
+    foot.y = blend(Math.max(0, walk[index + 1] - .103) * .48, Math.max(0, run[index + 1] - .14) * .55, running) * movement;
+    foot.y += Math.max(0, .095 * Math.sin(foot.pitch)) * movement;
+    const dx = foot.x - sway - spec.hip.x;
+    const dz = foot.z - pelvisZ - spec.hip.z;
+    const reach = spec.upper + spec.lower - .018;
+    const limit = spec.footY + foot.y - spec.hip.y +
+      Math.sqrt(Math.max(.08, reach ** 2 - dx ** 2 - dz ** 2));
+    const near = Math.max(.038 - Math.abs(pelvisY - limit), 0) / .038;
+    pelvisY = Math.min(pelvisY, limit) - near ** 2 * .0095;
+  }
+  _hip.set(sway, pelvisY, pelvisZ);
+  scene.localToWorld(_hip);
+  pelvis.parent.worldToLocal(_hip);
+  pelvis.position.lerp(_hip, grounded);
+  pelvis.quaternion.slerp(stand.bones.pelvis.local, grounded);
+  pelvis.updateMatrixWorld(true);
+  for (const [side, foot] of Object.entries(feet)) {
+    placeLeg(scene, side, foot, grounded, stand, _sceneQ);
+  }
+  // Add the captured shoulder turn and forward lean above the planted legs.
+  const chest = scene.getObjectByName('spine_02');
+  chest.getWorldQuaternion(_standWorld);
+  const turn = blend(walkUpper[1], runUpper[1], running) * .63 * movement;
+  const lean = blend(walkUpper[0] * .55, runUpper[0] * .47, running) * movement;
+  _axis.set(0,1,0).applyQuaternion(_sceneQ);
+  _delta.setFromAxisAngle(_axis, turn);
+  _newWorld.copy(_delta).multiply(_standWorld);
+  _axis.set(1,0,0).applyQuaternion(_sceneQ);
+  _delta.setFromAxisAngle(_axis, lean);
+  _newWorld.premultiply(_delta);
+  chest.parent.getWorldQuaternion(_parentQ);
+  chest.quaternion.slerp(_parentQ.invert().multiply(_newWorld), grounded);
+  chest.updateMatrixWorld(true);
+
+  const lead = feet.r.z - feet.l.z;
+  for (const [side, index] of [['l', 2], ['r', 8]]) {
+    const outward = side === 'l' ? 1 : -1;
+    const swing = (from,to,axis) => blend(Math.atan2(from[axis+2],-from[axis+1]),
+      Math.atan2(to[axis+2],-to[axis+1]), running);
+    const measuredSwing = swing(walkUpper,runUpper,index);
+    const measuredElbow = swing(walkUpper,runUpper,index + 3) - measuredSwing;
+    const arm = outward * lead * blend(.47, .57, running) +
+      (measuredSwing + blend(0,.40,running)) * .28 * movement;
+    const bend = .12 + THREE.MathUtils.clamp(measuredElbow,.08,.95) * movement * blend(.74,.83,running);
+    const clearance = blend(.20,.25,running) +
+      Math.abs(blend(walkUpper[index],runUpper[index],running)) * .15 * movement;
+    for (const [joint, direction, angle, x] of [
+      ['upperarm', 'upperDir', arm, outward * clearance],
+      ['lowerarm', 'lowerDir', arm + bend, outward * .105],
+    ]) {
+      const name = joint + '_' + side;
+      const bone = scene.getObjectByName(name);
+      toWorld(_sceneQ, x, -Math.cos(angle), Math.sin(angle), _dir);
+      aimFromStand(bone, stand.bones[name], stand.arms[side][direction], _dir, _sceneQ, grounded);
+    }
+    const hand = scene.getObjectByName('hand_' + side);
+    hand.quaternion.slerp(rig.rest.get(hand.name), grounded);
+  }
+}
+
 export function animatePerson(root, dt, distance = 0, jumpAge = null) {
   const rig = root.userData.rig;
   if (!rig) return;
@@ -657,23 +765,20 @@ export function animatePerson(root, dt, distance = 0, jumpAge = null) {
   rig.jumping = THREE.MathUtils.damp(rig.jumping, jumpAge === null ? 0 : 1, 21, dt);
 
   // Phase spans the entire source clip: four footfalls, not a single stride.
-  const cycleLen = THREE.MathUtils.lerp(WALK_CYCLE, RUN_CYCLE, rig.running);
-  const advance=gaitAdvance(dt,distance,rig.running,walk.getClip().duration,run.getClip().duration);
+  const advance=gaitAdvance(dt,distance,rig.running);
   rig.footfalls=jumpAge===null&&rig.jumping<.1
     ?Math.floor((rig.phase+advance)*CLIP_FOOTFALLS)-Math.floor(rig.phase*CLIP_FOOTFALLS):0;
   rig.phase=(rig.phase+advance)%1;
 
   const grounded = 1 - rig.jumping;
-  const walkPhase = rig.phase;
-  const runPhase = (rig.phase + (rig.runLead || 0)) % 1;
-  
-  walk.time = walkPhase * walk.getClip().duration;
-  run.time = runPhase * run.getClip().duration;
-  
-  walk.setEffectiveWeight(grounded * rig.movement * (1 - rig.running));
-  run.setEffectiveWeight(grounded * rig.movement * rig.running);
-  
-  const idleWeight = grounded * (1 - rig.movement);
+  if (!rig.footPose) {
+    walk.time = rig.phase * walk.getClip().duration;
+    run.time = ((rig.phase + (rig.runLead || 0)) % 1) * run.getClip().duration;
+  }
+  walk.setEffectiveWeight(rig.footPose ? 0 : grounded * rig.movement * (1 - rig.running));
+  run.setEffectiveWeight(rig.footPose ? 0 : grounded * rig.movement * rig.running);
+
+  const idleWeight = rig.footPose ? grounded : grounded * (1 - rig.movement);
   idle.setEffectiveWeight(idleWeight);
   
   // Seamless jump animation recovery without freeze-pop
@@ -688,21 +793,9 @@ export function animatePerson(root, dt, distance = 0, jumpAge = null) {
   
   rig.scene.position.y = THREE.MathUtils.damp(rig.scene.position.y, rig.idleOffset, 12, dt);
   rig.mixer.update(dt);
+  if (rig.footPose) retargetAnna(rig, grounded);
   attachFeet(rig.scene,rig.stand);
-  const gait = rig.movement * (1 - rig.jumping);
-  // Preserve the captured leg motion. The old procedural stride pulled the
-  // independently rigged shoes beyond the knees' reach, especially in a run.
-  // Drive the opposite arm from the actual foot poses, not an assumed clip
-  // phase: the captured walk and run do not start with the same leading leg.
-  rig.scene.updateWorldMatrix(true,true);rig.scene.getWorldQuaternion(_sceneQ);
-  const left=rig.scene.getObjectByName('foot_l'),right=rig.scene.getObjectByName('foot_r');
-  left.getWorldPosition(_ankle);right.getWorldPosition(_knee);
-  _dir.set(0,0,1).applyQuaternion(_sceneQ);
-  const difference=_knee.sub(_ankle).dot(_dir);
-  const target=THREE.MathUtils.clamp(difference/(cycleLen*.42),-1,1)*rig.movement;
-  rig.armSwing=target;
-  naturalArms(rig.scene,rig.armSwing,1-rig.jumping*.85,rig.rest,rig.running,rig.stand);
-  if (gait < 0.15 && rig.jumping < 0.05) rig.scene.position.y = rig.idleOffset + Math.sin(performance.now() * 0.0016) * 0.006;
+  if (!rig.footPose) naturalArms(rig.scene, 0, grounded, rig.rest, rig.running, rig.stand);
 }
 
 let shadowMaterial;

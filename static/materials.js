@@ -179,8 +179,8 @@ function paintWood(stage) {
   ctx.fillStyle = ['#8d6844', '#7d7360', '#8ea09a'][stage];
   ctx.fillRect(0, 0, 512, 512);
   const rand = rng(19 + stage);
-  for (let y = 0; y < 512; y += 3) {
-    ctx.strokeStyle = `rgba(40,24,12,${.08 + rand() * .12})`;
+  for (let y = 0; y < 512; y += 4) {
+    ctx.strokeStyle = `rgba(40,24,12,${.025 + rand() * .09})`;
     ctx.beginPath();
     ctx.moveTo(0, y);
     ctx.bezierCurveTo(160, y + rand() * 6, 340, y - rand() * 6, 512, y);
@@ -199,7 +199,7 @@ function paintWood(stage) {
   }
   const rough = canvas();
   rough.getContext('2d').drawImage(c, 0, 0);
-  return {color: c, height, rough, metalness: .02, normalScale: .45};
+  return {color: c, height, rough, metalness: .02, normalScale: .26};
 }
 
 function paintSteel() {
@@ -304,7 +304,7 @@ export function surfaceMaterial(kind, stage, repeat = [4, 4], quality = 1) {
     material.bumpMap = stamp(maps.bump, repeat);
     material.bumpScale = kind === 'steel' ? .02 : .045;
   }
-  if(kind==='plaster'||kind==='floor')material.userData.tileMeters=4;
+  if (['plaster','floor','wood','steel'].includes(kind)) material.userData.tileMeters=kind==='wood'?2.4:4;
   return material;
 }
 

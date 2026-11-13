@@ -12,11 +12,11 @@ const check=(name,run)=>{run();checks++;console.log('PASS',name);};
 check('Walking covers the same distance at 10, 30, 60 and 144 FPS',()=>{
  const reference=walk(60,WALK_SPEED);
  for(const fps of [10,30,144])assert(Math.abs(walk(fps,WALK_SPEED).z-reference.z)<1e-8);
- assert(-reference.z>10);
+ assert(Math.abs(reference.z+WALK_SPEED*(3-(1-Math.exp(-33))/11))<1e-8);
 });
 check('Running is faster and also independent of frame rate',()=>{
  const reference=walk(60,RUN_SPEED);
- assert(-reference.z>18);
+ assert(Math.abs(reference.z+RUN_SPEED*(3-(1-Math.exp(-33))/11))<1e-8);
  assert(Math.abs(walk(10,RUN_SPEED).z-reference.z)<1e-8);
  assert(RUN_SPEED>WALK_SPEED);
 });

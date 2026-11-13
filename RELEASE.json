@@ -1,8 +1,8 @@
 {
   "name": "TIMELESS",
   "version": "4.2.0",
-  "date": "2026-11-12",
-  "status": "Локальные исправления: голос «вперёд», непрерывные жесты, ходьба 3.5 м/с и бег 6.5 м/с, противоположные пары рук и ног, окружение и сохранения. Подробные проверки: docs/QA_2026-11-12.html.",
+  "date": "2026-11-14",
+  "status": "Настольные сборки TIMELESS, новый игровой интерфейс, подсказки в настройках и переназначение клавиш.",
   "story_version": 4,
   "epochs": [
     1978,
@@ -17,7 +17,7 @@
   ],
   "timer_seconds": 1500,
   "timeout_cinematic_seconds": 9,
-  "functional_passed": 88,
+  "functional_passed": 91,
   "controls_passed": 23,
   "browser_checks_passed": 7,
   "timer_ui_checks_passed": 7,
@@ -26,7 +26,7 @@
     "MediaPipe две руки локально"
   ],
   "human_testing": "Живые испытания с людьми не проводились. Vosk и MediaPipe проверены настоящими моделями с синтетическим микрофоном и камерой.",
-  "runtime": "Python 3.10+, браузер WebGL. Без внешних Python-пакетов.",
+  "runtime": "Настольное приложение со встроенными Electron и Python. macOS arm64, Windows x64.",
   "rescue_route_transfers": 4,
   "character_models": [
     "Анна (168-канальный скелет: Idle_Standing, Walk, Run, Jog, Jump)",

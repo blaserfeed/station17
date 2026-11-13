@@ -1,2 +1,0 @@
-c88a58aa2420d6e1ef4c87c0e5241e5129712a214718be35d2881305d8327490  The-Last-Signal-Windows-x64-preview.zip
-e6184d78875769c027b3900c612d0167c4fad1ea142a7e5a7aa571cfbb96e790  The-Last-Signal-macOS-arm64-preview.zip

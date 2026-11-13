@@ -8,9 +8,14 @@ const shots=[
  ['workshop',[-24,1.65,18],[-30,1.3,10]],
  ['tanks',[24,1.65,-12],[24,1.7,-24]],
  ['control',[22,1.65,18],[28,1.2,18]],
+ ['monitor',[27.55,1.53,-16.65],[27.53,1.21,-18.00]],
+ ['valve',[-26.55,1.67,8.75],[-29,1.23,7]],
+ ['museum-bench',[-25.9,1.6,-6.25],[-28,1.05,-5]],
  ['passage',[-25,1.65,6],[-25,1.2,-6]],
  ['windows',[32,1.65,5],[45,2,5]],
  ['roof',[-8,1.65,19],[0,8.5,0]],
+ ['yard',[40,2.6,-21],[62,1.45,-27]],
+ ['reservoir',[45,7,-47],[0,-1.2,-81]],
 ];
 (async()=>{
  const browser=await chromium.launch({executablePath:process.env.STATION_BROWSER||undefined,headless:true,args:['--enable-unsafe-swiftshader']});
@@ -32,7 +37,7 @@ const shots=[
     }
     if(!state.game.portal.repaired){
      await act('collect',{id:'portal_fuse',position:[7.5,23]});
-     await act('portal_repair',{position:state.game.portal.console});
+     await act('portal_repair',{position:state.game.portal.console,circuit:[1,0,3,2]});
     }
     await act('portal_open',{target,position:state.game.portal.console});
     await act('travel',{position:state.game.portal.position});
@@ -43,7 +48,7 @@ const shots=[
     chronoshov.controls.resetMotion();
     const w=chronoshov.world;w.setMode('first');w.releaseLook();w.player.visible=false;
     w.cameraStep=function(){if(!this.auditShot)return;this.camera.position.set(...this.auditShot.eye);this.camera.lookAt(...this.auditShot.target);this.player.visible=false;};
-    document.querySelectorAll('header,footer,#hud,#map-panel,#countdown,#look-help,#interaction,#aim,#toast').forEach(e=>e.style.setProperty('display','none','important'));
+    document.querySelectorAll('header,footer,#map-panel,#countdown,#current-objective,#interaction,#aim,#toast').forEach(e=>e.style.setProperty('display','none','important'));
    });
    for(const [name,eye,target] of shots){
     await page.evaluate(({eye,target})=>{chronoshov.world.auditShot={eye,target};}, {eye,target});

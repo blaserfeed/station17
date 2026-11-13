@@ -24,8 +24,21 @@ function box(p,size,pos,m){
  }
  return mesh(geometry,m,p,pos);
 }
-function label(text,color='#20374a',width=384){const c=document.createElement('canvas');c.width=width;c.height=72;const ctx=c.getContext('2d');ctx.fillStyle='#fffdf5f0';ctx.fillRect(0,0,width,72);ctx.fillStyle=color;let fontSize=27;ctx.font='600 '+fontSize+'px system-ui';while(ctx.measureText(text).width>width-24&&fontSize>13){fontSize--;ctx.font='600 '+fontSize+'px system-ui';}ctx.textAlign='center';ctx.fillText(text,width/2,46);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:true}));s.scale.set(1.8,.34,1);return s;}
-function floorTexture(stage){const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');x.fillStyle=['#b8b3a1','#aab9b4','#edf5f4'][stage];x.fillRect(0,0,512,512);let seed=49;const rand=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};for(let i=0;i<6000;i++){const a=rand(),b=rand();x.fillStyle=`rgba(70,61,47,${rand()*.07})`;x.fillRect(a*512,b*512,stage===0?2+rand()*32:1,1);}x.strokeStyle=stage===0?'#b49b7d':'#a6b6b1';x.lineWidth=1.2;for(let i=0;i<=512;i+=64){x.beginPath();x.moveTo(0,i);x.lineTo(512,i);x.stroke();for(let j=0;j<512;j+=128){const at=j+(i%128?64:0);x.beginPath();x.moveTo(at,i);x.lineTo(at,i+64);x.stroke();}}const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(4,4);t.anisotropy=8;return t;}
+function mountedSign(parent,text,pos,width,height,rotation=0){
+ const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=Math.max(104,Math.round(1024*height/width));
+ const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;
+ ctx.fillStyle='#d7d9ca';ctx.fillRect(0,0,w,h);
+ ctx.strokeStyle='#55716b';ctx.lineWidth=4;ctx.strokeRect(10,10,w-20,h-20);
+ ctx.fillStyle='#203c39';ctx.textAlign='center';ctx.textBaseline='middle';
+ let font=h*.43;
+ ctx.font='650 '+font+'px system-ui';
+ while(ctx.measureText(text).width>w-54&&font>20){font--;ctx.font='650 '+font+'px system-ui';}
+ ctx.fillText(text,w/2,h*.51);
+ const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=8;
+ const plate=mesh(new THREE.PlaneGeometry(width,height),new THREE.MeshBasicMaterial({map:texture}),parent,pos);
+ plate.name='mounted-sign';plate.rotation.y=rotation;plate.castShadow=false;plate.receiveShadow=false;
+ return plate;
+}
 function surface(parent,pos,size,title,lines=[],future=false,rotation=0){
  const c=document.createElement('canvas');c.width=768;c.height=Math.max(144,Math.round(768*size[1]/size[0]));
  const ctx=c.getContext('2d'),w=c.width,h=c.height,pad=30;
@@ -43,7 +56,7 @@ function surface(parent,pos,size,title,lines=[],future=false,rotation=0){
  });
  const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=8;
  const plane=mesh(new THREE.PlaneGeometry(...size),new THREE.MeshBasicMaterial({map:tex}),parent,pos);
- plane.rotation.y=rotation;plane.castShadow=false;plane.name='equipment-label';return plane;
+ plane.rotation.y=rotation;plane.castShadow=false;plane.receiveShadow=false;plane.name='equipment-label';return plane;
 }
 function detailsBatch(parent,entries){const inst=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),mat(0xffffff),entries.length),dummy=new THREE.Object3D();entries.forEach((e,i)=>{dummy.position.set(e[0],e[1],e[2]);dummy.scale.set(e[3],e[4],e[5]);dummy.rotation.set(0,e[7]||0,0);dummy.updateMatrix();inst.setMatrixAt(i,dummy.matrix);inst.setColorAt(i,new THREE.Color(e[6]));});inst.receiveShadow=true;inst.castShadow=false;parent.add(inst);return inst;}
 let contactTexture;
@@ -69,7 +82,7 @@ export class World{
   this.hemi=new THREE.HemisphereLight(0xe7f4ff,0x9a927e,.95);this.scene.add(this.hemi);this.sun=new THREE.DirectionalLight(0xfff1d6,2.15);this.sun.position.set(-13,22,14);this.sun.castShadow=true;this.sun.shadow.mapSize.set(2048,2048);this.sun.shadow.radius=2.5;Object.assign(this.sun.shadow.camera,{left:-28,right:28,top:28,bottom:-28,far:78});this.sun.shadow.bias=-.00045;this.sun.shadow.normalBias=.04;this.scene.add(this.sun);this.fill=new THREE.DirectionalLight(0xd7e8ff,.3);this.fill.position.set(18,12,-10);this.scene.add(this.fill);this.atmosphere=attachAtmosphere(this.scene,this.renderer);
   this.level=new THREE.Group();this.scene.add(this.level);this.player=person('anna');this.scene.add(this.player);this.player.position.set(-2,0,21);this.npc=person('sergey');this.scene.add(this.npc);this.npc.position.set(0,0,17);this.npc.rotation.y=-.48;
   this.playerShadow=footShadow();this.npcShadow=footShadow();this.scene.add(this.playerShadow,this.npcShadow);this.graphics=1;
-  this.clock=new THREE.Clock();this.input={x:0,z:0};this.active=false;this.inGame=false;this.elapsed=0;this.hurtUntil=0;this.hitCooldown=0;this.pendingPick=new Set();this.lastCollect=0;this.mode=localStorage.getItem('station17-view')==='first'?'first':'third';this.yaw=Math.PI/4;this.pitch=.12;this.distance=3.55;this.cameraReady=false;this.drag=false;this.loadDemo();
+  this.clock=new THREE.Clock();this.input={x:0,z:0};this.active=false;this.inGame=false;this.elapsed=0;this.hurtUntil=0;this.hitCooldown=0;this.pendingPick=new Set();this.lastCollect=0;this.mode=localStorage.getItem('timeless-view')==='first'?'first':'third';this.yaw=Math.PI/4;this.pitch=.12;this.distance=3.55;this.cameraReady=false;this.drag=false;this.loadDemo();
   this.targetYaw=this.yaw;this.targetPitch=this.pitch;this.collision=new StationCollision([],[-36,36,-27,27],.43);this.velocity=new THREE.Vector2();this.travelled=0;this.jumpAge=null;this.fallbackLook=false;this.wantsLook=false;this.capturePending=false;
   const canvas=this.renderer.domElement;
   canvas.addEventListener('click',()=>this.captureLook());
@@ -81,7 +94,7 @@ export class World{
  }
  loadDemo(){this.build({stage:0,run_id:'preview',epoch:{clues:[],terminals:[],hazards:[]},walls:[[-12,-22.5,.7,9],[-12,-2,.7,16],[-12,20.5,.7,13],[12,-22.5,.7,9],[12,-2,.7,16],[12,20.5,.7,13],[-32,0,8,.7],[-17,0,10,.7],[17,0,10,.7],[32,0,8,.7],[-3,-12,5,5],[3,1,5,5],[-3,11,5,5]],repairs:{valve:false},director:{mode:'обычный'},found:[],activated:[],position:[-2,21]});}
  resize(){this.renderer.setSize(innerWidth,innerHeight);this.camera.aspect=innerWidth/innerHeight;this.camera.updateProjectionMatrix();}
- setMode(mode){this.mode=mode==='first'?'first':'third';localStorage.setItem('station17-view',this.mode);this.camera.fov=this.mode==='first'?76:63;this.camera.updateProjectionMatrix();this.cameraReady=false;if(this.inGame)this.player.visible=this.mode!=='first';}
+ setMode(mode){this.mode=mode==='first'?'first':'third';localStorage.setItem('timeless-view',this.mode);this.camera.fov=this.mode==='first'?76:63;this.camera.updateProjectionMatrix();this.cameraReady=false;if(this.inGame)this.player.visible=this.mode!=='first';}
  toggleView(){this.setMode(this.mode==='first'?'third':'first');return this.mode;}
  setActive(v){this.active=v;if(!v){this.input={x:0,z:0};this.velocity?.set(0,0);}}
  async captureLook(){if(!this.active||this.capturePending||document.pointerLockElement===this.renderer.domElement)return;this.capturePending=true;this.wantsLook=true;try{if(!this.renderer.domElement.requestPointerLock)throw new Error('Pointer lock unavailable');await this.renderer.domElement.requestPointerLock();if(document.pointerLockElement!==this.renderer.domElement)this.fallbackLook=true;}catch(e){this.fallbackLook=true;}finally{this.capturePending=false;}}
@@ -125,7 +138,7 @@ export class World{
   if(this.caseReel)this.caseReel.visible=!g.inventory.includes('fatherlog');
   const sergey=!!g.npc_position;
   if(this.collision&&wasSergey!==sergey)this.collision=new StationCollision(g.solids||[],g.bounds,g.player_radius||.43);
-  this.npc.visible=sergey||!!this.departure||!!this.confession;this.npcShadow.visible=sergey;if(this.npcLabel)this.npcLabel.visible=sergey;
+  this.npc.visible=sergey||!!this.departure||!!this.confession;this.npcShadow.visible=sergey;
  }
  build(g){
   const oldMaterials=new Set(),oldTextures=new Set(),mapKeys=['map','normalMap','roughnessMap','bumpMap','metalnessMap','emissiveMap','alphaMap'];for(const c of [...this.level.children]){this.level.remove(c);c.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.geometry?.dispose();for(const m of Array.isArray(o.material)?o.material:o.material?[o.material]:[]){oldMaterials.add(m);for(const key of mapKeys){const tex=m[key];if(tex&&!tex.userData.keep)oldTextures.add(tex);}}});}oldMaterials.forEach(m=>m.dispose());oldTextures.forEach(t=>t.dispose());
@@ -155,24 +168,33 @@ export class World{
    for(const z of [-23,-15,-7,1,9,17,23]){
     const light=casing(this.level,[.27,.14,2.25],[side*8.9,7.8,z],dark,.05);
     light.castShadow=false;
+    for(const end of [-.79,.79])cylinder(this.level,.024,.61,[side*8.9,8.133,z+end],steel,.024,8).castShadow=false;
     casing(this.level,[.19,.024,2.08],[side*8.9,7.718,z],mat(0xfff9e2,{emissive:future?0xabf1eb:0xffedc9,emissiveIntensity:.43}),.01).castShadow=false;
    }
   }
-  for(const [x,z,w,d] of g.walls){if(turbines.some(p=>p[0]===x&&p[1]===z)||w===6&&x===-25&&z===0||w===.7&&d===4.2||w===3&&d===1.5)continue;if(w===1&&d>=7){const rack=stage===2?mat(0xc7dedd):wood;wallBox([.12,2.4,d],[x-.45,1.2,z],rack);for(const y of [.12,.7,1.28,1.86,2.44])wallBox([1.04,.07,d],[x,y,z],rack);for(let dz=-d/2;dz<=d/2;dz+=1.5)wallBox([1.0,2.4,.06],[x,1.2,z+dz],rack);const contents=[];for(let dz=-d/2+.25;dz<d/2-.2;dz+=.4)for(const y of [.4,.98,1.56,2.14])contents.push([x+.1,y,z+dz,.65,.4,.28,stage===2?0x9bbbc1:stage===1?0x788c83:0xb4a278]);detailsBatch(this.level,contents);continue;}const tall=w<1||d<1;const h=tall?3.8:1.8;wallBox([w,h,d],[x,h/2-.02,z],tall?plaster:wood);box(this.level,[w+.04,.13,d+.04],[x,tall?.95:1.84,z],base);}
+  for(const [x,z,w,d] of g.walls){if(turbines.some(p=>p[0]===x&&p[1]===z)||w===6&&x===-25&&z===0||w===.7&&d===4.2||w===3&&d===1.5)continue;if(w===1&&d>=7){const rack=stage===2?mat(0xc7dedd):wood;wallBox([.12,2.4,d],[x-.45,1.2,z],rack);for(const y of [.12,.7,1.28,1.86,2.44])wallBox([1.04,.07,d],[x,y,z],rack);for(let dz=-d/2;dz<=d/2;dz+=1.5)wallBox([1.0,2.4,.06],[x,1.2,z+dz],rack);const contents=[];for(let dz=-d/2+.25;dz<d/2-.2;dz+=.4)for(const y of [.4,.98,1.56,2.14])contents.push([x+.1,y,z+dz,.65,.4,.28,stage===2?0x9bbbc1:stage===1?0x788c83:0xb4a278]);detailsBatch(this.level,contents);continue;}if(x===-28&&z===-5)continue;const tall=w<1||d<1;const h=tall?3.8:1.8;wallBox([w,h,d],[x,h/2-.02,z],tall?plaster:wood);box(this.level,[w+.04,.13,d+.04],[x,tall?.95:1.84,z],base);}
   // Side-wing roofs leave the central machinery hall open to clerestory light.
   for(const x of [-24,24]){wallBox([24,.24,54],[x,4.12,0],mat(0xcbd2bf));for(let z=-24;z<27;z+=8)box(this.level,[23,.25,.2],[x,3.85,z],steel);}
   for(let z=-24;z<=24;z+=12){for(const x of [-10.8,10.8])wallBox([.7,8.5,.7],[x,4.2,z],mat(0xaeb8a9));box(this.level,[22,.25,.3],[0,8.3,z],steel);for(const x of [-7,0,7]){const brace=box(this.level,[.12,2.1,.12],[x,7.3,z],steel);brace.rotation.z=x<0?-.65:.65;}}
-  const sign=(text,pos,w=3.2)=>{const l=label(text);l.position.set(...pos);l.scale.set(w,w*.19,1);this.level.add(l);return l;};
-  const wallSign=(text,pos,rot,w=3.2)=>{const s=label(text);const m=new THREE.MeshBasicMaterial({map:s.material.map});const b=mesh(new THREE.PlaneGeometry(w,w*.19),m,this.level,pos);b.rotation.y=rot;b.castShadow=false;return b;};
+  const wallSign=(text,pos,rotation,w=3.2)=>{
+   const fixture=new THREE.Group();fixture.position.set(...pos);fixture.rotation.y=rotation;this.level.add(fixture);
+   casing(fixture,[w+.10,w*.19+.07,.09],[0,0,-.04],dark,.012);
+   return mountedSign(fixture,text,[0,0,.013],w,w*.19);
+  };
   for(const x of [-12,12])for(const z of [-14,10])wallBox([.7,.65,8],[x,3.65,z],plaster);
   const skylight=mat(0xb6d8de,{transparent:true,opacity:.24,depthWrite:false,roughness:.18,side:THREE.DoubleSide});
-  box(this.level,[7.73,.03,54],[0,8.56,0],skylight).castShadow=false;
+  const glassRoof=mesh(new THREE.PlaneGeometry(7.73,54),skylight,this.level,[0,8.56,0]);
+  glassRoof.rotation.x=-Math.PI/2;glassRoof.castShadow=false;glassRoof.receiveShadow=false;
   const window=mat(stage===2?0xb5d9df:0xb2c7c3,{transparent:true,opacity:.31,depthWrite:false,roughness:.2,side:THREE.DoubleSide});
   roof(this.level,stage,steel,window);
-  sign('СТАНЦИЯ 17 · '+[1978,2026,2074][stage],[0,4.8,-26.5],7);wallSign('АРХИВ',[-11.6,3.5,-14],Math.PI/2,3);wallSign('МАСТЕРСКАЯ',[-11.6,3.5,10],Math.PI/2,3.5);wallSign('ТУРБИННЫЙ ЗАЛ',[11.6,3.5,-14],-Math.PI/2,4);wallSign('ДИСПЕТЧЕРСКАЯ',[11.6,3.5,10],-Math.PI/2,4);
+  box(this.level,[7.23,.76,.14],[0,4.98,-26.705],dark);
+  wallSign('ГИДРОУЗЕЛ ОЛЬХОВ · '+[1978,2026,2074][stage],[0,4.98,-26.605],0,7);wallSign('АРХИВ',[-11.6,3.5,-14],Math.PI/2,3);wallSign('МАСТЕРСКАЯ',[-11.6,3.5,10],Math.PI/2,3.5);wallSign('ТУРБИННЫЙ ЗАЛ',[11.6,3.5,-14],-Math.PI/2,4);wallSign('ДИСПЕТЧЕРСКАЯ',[11.6,3.5,10],-Math.PI/2,4);
   // Painted paths and practical props give the large building a readable layout.
-  for(const x of [-8,8])box(this.level,[.08,.012,49],[x,.035,0],orange);
-  if(stage===1){for(const [x,z,w,d] of [[-3,-10,3.4,1.6],[9,7,2.4,2.2],[22,-16,3.6,1.3]]){const stain=box(this.level,[w,.012,d],[x,.03,z],mat(0x355864,{transparent:true,opacity:.42,roughness:.25,polygonOffset:true,polygonOffsetFactor:-2}));stain.castShadow=false;}}
+  for(const x of [-8,8]){
+   const stripe=mesh(new THREE.PlaneGeometry(.08,49),orange,this.level,[x,.026,0]);
+   stripe.rotation.x=-Math.PI/2;stripe.castShadow=false;
+  }
+  if(stage===1){for(const [x,z,w,d] of [[-3,-10,3.4,1.6],[9,7,2.4,2.2],[22,-16,3.6,1.3]]){const stain=mesh(new THREE.PlaneGeometry(w,d),mat(0x355864,{transparent:true,opacity:.32,depthWrite:false,roughness:.52}),this.level,[x,.023,z]);stain.rotation.x=-Math.PI/2;stain.castShadow=false;}}
   for(const [x,z] of turbines){
    if(future)cylinder(this.level,2.45,.6,[x,.3,z],metal(0xb0c7c9),2.54,48);
    if(stage===2){
@@ -194,25 +216,39 @@ export class World{
    }else{
     generator(this.level,x,z,stage,base,piping);
     casing(this.level,[1.44,.49,.16],[x,2,z+1.87],dark,.045);
-    surface(this.level,[x,2,z+1.956],[1.33,.42],stage===0?'ГЕНЕРАТОР Г-17':'БЛОК ДИАГНОСТИКИ',stage===0?['Первый пуск  •  1978','Проверить ручную защиту']:['Последняя смена  •  2026','Давление на входе растёт'],false);
+    surface(this.level,[x,2,z+1.956],[1.33,.42],stage===0?'ГЕНЕРАТОР':'БЛОК ДИАГНОСТИКИ',stage===0?['Первый пуск  •  1978','Проверить ручную защиту']:['Последняя смена  •  2026','Давление на входе растёт'],false);
    }
   }
   const details=[];
-  for(const [x,z] of g.layout?.racks||[[-33,-20],[-33,-10],[-26,-20],[-26,-10],[-18,-20],[-18,-10]]){box(this.level,[.7,2.4,4.2],[x,1.2,z],wood);for(let y=.45;y<2.3;y+=.6){box(this.level,[.84,.07,4.3],[x,y,z],steel);for(let k=0;k<8;k++)details.push([x+.44,y+.25,z-1.4+k*.4,.25,.4,.2,stage===2?[0x7faab4,0xaecbcc,0xe1ece7][k%3]:[0xa99569,0x849a86,0x986d55,0x7b8d94][k%4]]);}}
-  if(stage===2)surface(this.level,[-17.51,1.65,-10],[2.3,1.35],'ЦИФРОВОЙ АРХИВ',['Семейные дела оцифрованы','Исторический фонд 1978–2026','Доступ к карточке — на рабочем столе'],true,Math.PI/2);
+  for(const [x,z] of g.layout?.racks||[[-33,-20],[-33,-10],[-26,-20],[-26,-10],[-18,-20],[-18,-10]]){
+   const depth=z===-10&&x<-25?3.44:4.2;
+   box(this.level,[.09,2.4,depth],[x-.31,1.22,z],wood);
+   for(const end of [-1,1])box(this.level,[.84,2.4,.08],[x,1.22,z+end*(depth/2-.04)],wood);
+   box(this.level,[.85,.07,depth],[x,2.405,z],steel);
+   for(let y=.28;y<2.3;y+=.55){
+    box(this.level,[.84,.07,depth],[x,y,z],steel);
+    for(let k=0;k<8;k++)details.push([x+.12,y+.235,z-1.4+k*.39,.39,.4,.24,
+     stage===2?[0x7faab4,0xaecbcc,0xe1ece7][k%3]:[0xa99569,0x849a86,0x986d55,0x7b8d94][k%4]]);
+   }
+  }
+  if(stage===2){
+   casing(this.level,[2.43,1.48,.115],[-17.585,1.65,-10],dark,.025).rotation.y=Math.PI/2;
+   surface(this.level,[-17.515,1.65,-10],[2.3,1.35],'ЦИФРОВОЙ АРХИВ',['Семейные дела оцифрованы','Исторический фонд 1978–2026','Доступ к карточке — на рабочем столе'],true,Math.PI/2);
+  }
   const desks=g.layout?.desks||[[-28,-18],[27,-18],[28,18],[-26,21],[-30,10]];
   for(const [i,[x,z]] of desks.entries()){
-   bench(this.level,x,z,stage,wood,piping,dark);
+   const screen=stage>0?(parent,pos,size)=>surface(parent,pos,size,
+    future?'СЕРВИС 2074':'СМЕНА 29.10',
+    future?['Синхронизация завершена']:['17:40  •  связь жива','Не обрывай контур'],true):null;
+   bench(this.level,x,z,stage,wood,piping,dark,screen);
    const [cx,cz]=g.layout?.chairs[i]||[x,z+(z===18?-2.2:2.2)];
    chair(this.level,cx,cz,stage,piping,z===18?Math.PI:0);
    deskLamp(this.level,x-1,z-.29,stage,piping);
-   if(future)surface(this.level,[x+.86,1.32,z-.197],[.70,.355],'СЕРВИС 2074',['Синхронизация завершена'],true);
-   else if(stage===1)surface(this.level,[x+.86,1.32,z-.14],[.70,.355],'СМЕНА 29.10',['17:40  •  связь жива','Не обрывай контур']);
   }
   for(const [x,z] of g.layout?.tanks||[[17,-22],[23,-22],[30,-22]])vessel(this.level,x,z,base,piping,future);
   // Noticeboards and framed records belong to the station, not floating quest markers.
   box(this.level,[4,2.1,.12],[0,2.05,26.85],stage===2?steel:wood);
-  surface(this.level,[0,2.1,26.76],[3.8,1.9],stage===0?'СМЕННЫЙ ЖУРНАЛ':stage===1?'ПОСТ ДЕЖУРНОГО':'МУЗЕЙ ПЕРВОГО ПУСКА',stage===0?['Объект 17  •  1978','До пуска один день','Клапан ещё слушается руки']:stage===1?['29.10.2026  •  17:40','Голос О. Соколова — сегодня','Сначала клапан, не спасение']:['Та же станция  •  2074','Вода помнит закрытую линию',g.repairs?.valve?'Линия Б осушила проход':'Катушка за затопленным проходом'],stage===2,Math.PI);
+  surface(this.level,[0,2.1,26.76],[3.8,1.9],stage===0?'СМЕННЫЙ ЖУРНАЛ':stage===1?'ПОСТ ДЕЖУРНОГО':'МУЗЕЙ ПЕРВОГО ПУСКА',stage===0?['Гидроузел Ольхов  •  1978','До пуска один день','Клапан ещё слушается руки']:stage===1?['29.10.2026  •  17:40','Голос О. Соколова — сегодня','Сначала клапан, не спасение']:['Та же станция  •  2074','Вода помнит закрытую линию',g.repairs?.valve?'Линия Б осушила проход':'Катушка за затопленным проходом'],stage===2,Math.PI);
   if(stage===0){surface(this.level,[-11.6,2.3,21],[2,1.3],'КАЛЕНДАРЬ',['1978','До первого пуска один день'],false,Math.PI/2);}
   if(stage===1){for(let z=-24;z<25;z+=3){details.push([-11.65,3.1,z,.18,.12,2.8,0x717b70],[11.65,3.1,z,.18,.12,2.8,0x717b70]);}for(const [x,z] of [[-15,17],[16,-14],[29,11]])details.push([x,.025,z,1.2,.01,.45,0x919d8c]);}
   if(stage===2){
@@ -233,34 +269,44 @@ export class World{
    const [title,lines]=captions[slot];
    const frame=new THREE.Group();frame.position.set(x,1.55,z);frame.rotation.y=yaw;frame.name='painting';this.level.add(frame);
    casing(frame,[1.35,.96,.07],[0,0,0],frameWood,.02);
+   if(slot!=='hall_west'&&slot!=='hall_east'){
+    for(const side of [-1,1])casing(frame,[.075,.13,.70],[side*.45,.29,-.31],dark,.02);
+   }
    surface(frame,[0,0,.046],[1.12,.74],title,lines,stage===2,0);
   }
   this.portal=g.portal?buildPortal(this.level,g.portal,(text,pos,width,parent)=>{
-   const plate=label(text);plate.position.set(...pos);plate.scale.set(width,.34,1);parent.add(plate);
+   mountedSign(parent,text,pos,width,.34);
   }):null;
   this.portal?.setState(g.portal);
   this.fusePickup=null;
   this.caseReel=null;
-  const slips={signature:['ШКАФ — 4',['Левая труба — не резерв']],carrier:['ПОЛКА — 1',['Правая труба — в насос']],delay:['ДЕЛО — 7',['Слева направо: А, Б, В']],photo:['2016',['Не обрывай связь']],radio:['СЕГОДНЯ',['Сначала открой резерв']],safe_note:['СЕЙФ',['Шкаф, полка, дело']]};
+  const slips={signature:['ШКАФ — 4',['Левая труба — не резерв']],carrier:['ПОЛКА — 1',['Правая труба — в насос']],delay:['ДЕЛО — 7',['Слева направо: А, Б, В']],photo:['2016',['Не обрывай связь']],radio:['СЕГОДНЯ',['Сначала открой резерв']],safe_note:['СЕЙФ',['Шкаф, полка, дело']],registry:['СЕМЕЙНОЕ ДЕЛО',['Архивная копия']]};
   for(const c of g.epoch.clues){
    if(c.requires==='valve'&&!g.repairs.valve)continue;
    const onDesk=!!slips[c.id];
-   const p=new THREE.Group();p.position.set(c.pos[0],c.id==='lines'||onDesk?1.0:1.03,c.pos[1]);this.level.add(p);
+   const p=new THREE.Group();p.position.set(c.pos[0],(c.id==='lines'||onDesk) ? .985 : 1.03,c.pos[1]);this.level.add(p);
    if(c.id==='portal_fuse'){
     p.name='portal-fuse';p.position.y=.55;
-    const caseBase=casing(this.level,[.65,.53,.45],[c.pos[0],.265,c.pos[1]],dark,.035);
+    const caseBase=casing(this.level,[.65,.53,.45],[c.pos[0],.28,c.pos[1]],dark,.035);
+    casing(this.level,[.58,.055,.37],[c.pos[0],.56,c.pos[1]],steel,.014);
+    for(const x of [-.14,.14])casing(p,[.075,.056,.11],[x,.039,0],dark,.014);
     caseBase.name='fuse-case';
     const fuse=cylinder(p,.072,.34,[0,.08,0],orange,.072,12);fuse.rotation.z=Math.PI/2;
     for(const x of [-.16,.16])cylinder(p,.079,.065,[x,.08,0],steel,.079,12).rotation.z=Math.PI/2;
     this.fusePickup=p;p.visible=!g.inventory?.includes(c.id);
    }else if(c.id==='fatherlog'){
-    p.name='father-recording';reel(p,[0,.055,0]);this.caseReel=p;p.visible=!g.inventory?.includes('fatherlog');
+    p.name='father-recording';p.position.y=.978;reel(p,[0,.055,0]);this.caseReel=p;p.visible=!g.inventory?.includes('fatherlog');
    }else if(c.id==='calibration'){
+    casing(this.level,[.56,.94,.21],[c.pos[0],.49,c.pos[1]],dark,.022);
+    casing(this.level,[.66,.08,.23],[c.pos[0],.06,c.pos[1]],steel,.014);
     casing(p,[.66,.41,.19],[0,.15,0],dark);
     surface(p,[0,.16,.102],[.55,.31],'ДИАГНОСТИКА',['Буква на листе стёрта','Три комнаты 1978'],true);
     box(p,[.34,.004,.01],[.05,.2,.12],mat(0x6d5a3a));
     pipe(p,[[0,.13,-.04],[0,-.91,-.04],[-.51,-1,-.35]],.037,piping,.15);
    }else if(c.id==='pass'){
+    casing(this.level,[.72,.81,.65],[c.pos[0],.423,c.pos[1]],dark,.035).name='pass-stand';
+    casing(this.level,[.78,.10,.71],[c.pos[0],.928,c.pos[1]],steel,.02);
+    p.position.y=.989;
     casing(p,[.34,.02,.22],[0,0,0],paper,.008);
     box(p,[.1,.006,.12],[-.08,.016,0],mat(0x6d7c78));
    }else if(c.id==='lines'){
@@ -273,8 +319,7 @@ export class World{
      sheet.rotation.x=-Math.PI/2;
     }else for(let k=0;k<4;k++)box(p,[.3,.002,.01],[0,.014,-.1+k*.055],mat(0x819080));
    }
-   const l=label(c.name);l.position.y=(c.id==='lines'||onDesk)?0.28:0.65;l.scale.set((c.id==='lines'||onDesk)?1.35:2.2,.42,1);p.add(l);
-   p.userData.clueLabel=l;this.pickups.set(c.id,p);
+   this.pickups.set(c.id,p);
   }
   // The family safe is a real hinged cabinet in the 2026 archive.
   this.safeDoor=null;if(stage===1){const p=new THREE.Group();p.position.set(-24,0,-23);this.level.add(p);for(const x of [-.75,.75])box(p,[.15,2,.9],[x,1,0],mat(0x647b73));for(const y of [.07,1.93])box(p,[1.65,.14,.9],[0,y,0],mat(0x647b73));box(p,[1.65,2,.12],[0,1,-.4],mat(0x647b73));box(p,[1.35,1.65,.04],[0,1,-.31],mat(0x2d4441));box(p,[.8,.05,.5],[0,.25,.05],paper);box(p,[.45,.04,.3],[.1,.33,.03],paper);const hinge=new THREE.Group();hinge.position.set(-.75,1,.57);p.add(hinge);casing(hinge,[1.5,1.85,.13],[.75,0,0],mat(0x82968a));for(const y of [-.55,.55])box(hinge,[.09,.2,.12],[.04,y,.08],steel);casing(hinge,[.48,.28,.07],[.75,.23,.1],mat(0x314b4b));for(let k=0;k<3;k++)box(hinge,[.1,.14,.03],[.61+k*.15,.23,.15],paper);mesh(new THREE.TorusGeometry(.17,.025,8,24),steel,hinge,[1.07,-.24,.12]);this.safeDoor=hinge;surface(hinge,[.75,.58,.083],[1.20,.30],'СЕМЕЙНОЕ ДЕЛО',['СОКОЛОВЫ · АРХИВ'],false);}
@@ -285,8 +330,9 @@ export class World{
   const valve=valveBank(this.level,[-29,0,7],stage,repaired);
   this.reserveWheel=valve.userData.reserveWheel;
   for(const [i,text] of ['А','Б','В'].entries()){
-   const tag=label(text);tag.position.set((i-1)*.79,2.57,.1);
-   tag.scale.set(.29,.15,1);valve.add(tag);
+   const x=(i-1)*.79;
+   casing(valve,[.34,.22,.085],[x,2.36,.12],dark,.012);
+   mountedSign(valve,text,[x,2.36,.175],.29,.15);
   }
   bench(this.level,-28,-5,stage,wood,piping,dark);
   wallBox([6,.65,.7],[-25,3.6,0],plaster);wallSign('ЗАПАДНЫЙ ПРОХОД',[-25,3.55,.4],0,3.6);
@@ -300,7 +346,6 @@ export class World{
   }
   addContactShadows(this.level,g.solids);
   this.batchedMeshes=batchStaticMeshes(this.level,[this.safeDoor,this.reserveWheel,...this.machineRotors,...this.pickups.values(),this.level.getObjectByName('time-portal'),this.level.getObjectByName('portal-console')]);
-  this.npcLabel=label('Сергей Морозов');this.npcLabel.position.set(0,2.10,17);this.npcLabel.scale.set(1.37,.26,1);this.npcLabel.visible=!!g.npc_position;this.level.add(this.npcLabel);
  }
  startFlood(g,motion=true){
   const sceneState={...g,stage:1,epoch:{year:2026,name:'Авария на станции',clues:[],terminals:[],hazards:[]}};this.build(sceneState);this.releaseLook();this.setActive(false);this.inGame=true;this.player.visible=false;this.npc.visible=false;this.oldMovieFov=this.camera.fov;this.camera.fov=58;this.camera.updateProjectionMatrix();this.sun.intensity=.65;
@@ -437,23 +482,52 @@ export class World{
  }
  setMemory(v){this.atmosphere?.setMemory(v);if(!v&&this.game)this.atmosphere?.apply(this,this.game.stage);}
  pulseValve(){if(this.reserveWheel)this.reserveWheel.rotation.z=0;}
+ footSurface(){
+  const {x,z}=this.player.position,portal=this.game?.portal?.position;
+  if(portal&&Math.abs(x-portal[0])<=1.32&&Math.abs(z-portal[1])<=.48)return 'metal';
+  if(this.game?.stage===0||this.game?.stage===2)return 'tile';
+  return 'concrete';
+ }
  jump(){if(this.active&&this.jumpAge===null)this.jumpAge=0;}
  position(){return [Number(this.player.position.x.toFixed(3)),Number(this.player.position.z.toFixed(3))];}
  nearest(){
   const g=this.game;if(!g)return null;
   const p=this.position(), dist=q=>Math.hypot(p[0]-q[0],p[1]-q[1]);
   const targets=[];
-  if(g.npc_position)targets.push({type:'npc',pos:g.npc_position,name:'Поговорить с Сергеем'});
-  if(g.portal)targets.push({type:'travel',pos:g.portal.console,name:g.portal.repaired?'Настроить портал':g.inventory?.includes('portal_fuse')?'Замкнуть цепь':'Щиток портала'});
-  if(g.stage===0)targets.push({type:'bypass',pos:g.valve_position,name:'Переключить клапан'});
-  if(g.stage===1)targets.push({type:'finale',pos:g.beacon_position,name:'Аварийный пульт'},
-    {type:'safe',pos:g.safe_position,name:'Архивный сейф'});
+  if(g.npc_position)targets.push({type:'npc',pos:g.npc_position,height:1.36,name:'Сергей Морозов',verb:'Поговорить'});
+  if(g.portal)targets.push({type:'travel',pos:g.portal.console,height:1.17,name:'Щиток портала',verb:g.portal.repaired?'Настроить':g.inventory?.includes('portal_fuse')?'Замкнуть цепь':'Осмотреть'});
+  if(g.stage===0)targets.push({type:'bypass',pos:g.valve_position,height:1.25,name:'Западный клапан',verb:'Переключить'});
+  if(g.stage===1)targets.push({type:'finale',pos:g.beacon_position,height:.94,name:'Аварийный пульт',verb:'Открыть'},
+    {type:'safe',pos:g.safe_position,height:1,name:'Архивный сейф',verb:'Открыть'});
   for(const c of g.epoch.clues){
    if(c.requires==='valve'&&(!g.repairs.valve||g.inventory.includes(c.id)))continue;
    if(c.id==='portal_fuse'&&(g.portal?.repaired||g.inventory.includes(c.id)))continue;
-   targets.push({type:'clue',id:c.id,pos:c.pos,name:c.id==='fatherlog'?'Забрать катушку':'Осмотреть: '+c.name});
+   const pickup=this.pickups.get(c.id);
+   if(!pickup?.visible)continue;
+   targets.push({type:'clue',id:c.id,pos:c.pos,height:pickup.position.y+.07,name:c.name,
+    verb:['portal_fuse','fatherlog','carrier','signature','pass'].includes(c.id)?'Взять':'Осмотреть'});
   }
-  return targets.map(t=>({...t,d:dist(t.pos)})).filter(t=>t.d<2.5).sort((a,b)=>a.d-b.d)[0]||null;
+  // Select only objects in reach and near the centre of the view.
+  this.camera.updateMatrixWorld();
+  const anchor=new THREE.Vector3(),ray=new THREE.Vector3();
+  const aspect=this.camera.aspect;
+  let focused=null,best=Infinity;
+  for(const target of targets){
+   if(!target.pos)continue;
+   const distance=dist(target.pos);
+   if(distance>=2.5)continue;
+   anchor.set(target.pos[0],target.height,target.pos[1]);
+   ray.subVectors(anchor,this.camera.position);
+   const length=ray.length();
+   anchor.project(this.camera);
+   const offset=Math.hypot(anchor.x*aspect,anchor.y);
+   if(anchor.z < -1 || anchor.z > 1 || Math.abs(anchor.x)>1 || offset>.42)continue;
+   ray.multiplyScalar(1/Math.max(length,.001));
+   if(this.collision.cameraLimit(this.camera.position,ray,length,{margin:0,ignoreAtEnd:.55})<length)continue;
+   const score=offset+distance*.035;
+   if(score<best){best=score;focused=target;}
+  }
+  return focused;
  }
  hurt(){this.hurtUntil=this.elapsed+1;this.player.position.set(-2,0,21);this.velocity.set(0,0);this.cameraReady=false;}
  cameraStep(dt){
@@ -511,15 +585,14 @@ export class World{
    const actualSpeed=Math.hypot(p.x-oldX,p.z-oldZ)/Math.max(dt,.001),moving=actualSpeed>.06;
    if(moving){const facing=Math.atan2(p.x-oldX,p.z-oldZ),turn=Math.atan2(Math.sin(facing-this.player.rotation.y),Math.cos(facing-this.player.rotation.y));this.player.rotation.y+=turn*(1-Math.exp(-dt*8));}
    this.travelled=Math.hypot(p.x-oldX,p.z-oldZ);
-   if(this.wasAir&&this.jumpAge===null)this.events.land?.();
+   if(this.wasAir&&this.jumpAge===null)this.events.land?.(this.footSurface());
    this.wasAir=this.jumpAge!==null;
   }
   if(this.game.repairs?.valve&&this.reserveWheel)this.reserveWheel.rotation.z=THREE.MathUtils.damp(this.reserveWheel.rotation.z,Math.PI/4,5,dt);
   animatePerson(this.player,dt,this.reunion?.motion?this.reunion.stepDistance||0:this.active?this.travelled:0,this.jumpAge);
-  if(this.active&&this.jumpAge===null&&this.player.userData.rig?.footfalls>0)this.events.footstep?.();
+  if(this.active&&this.jumpAge===null&&this.player.userData.rig?.footfalls>0)this.events.footstep?.(this.footSurface());
   if(this.departure)this.departureStep(dt);else animatePerson(this.npc,dt);
   if(this.active&&this.npc.visible&&!this.departure){const dx=this.player.position.x-this.npc.position.x,dz=this.player.position.z-this.npc.position.z;if(Math.hypot(dx,dz)<7){const face=Math.atan2(dx,dz),turn=Math.atan2(Math.sin(face-this.npc.rotation.y),Math.cos(face-this.npc.rotation.y));this.npc.rotation.y+=turn*(1-Math.exp(-dt*3.2));}}
-  for(const obj of this.pickups.values()){if(obj.userData.clueLabel)obj.userData.clueLabel.visible=Math.hypot(this.player.position.x-obj.position.x,this.player.position.z-obj.position.z)<9;}
   for(const rotor of this.machineRotors||[])rotor.rotation.y=t*(this.game.stage===2?.25:.045);for(const glow of this.machineLights||[])glow.material.emissiveIntensity=.55+Math.sin(t*.7)*.05;
   if(!this.floodCinematic&&this.motion!==false){for(let i=0;i<(this.lamps||[]).length;i++){const lamp=this.lamps[i];const blink=this.game?.stage===1&&Math.sin(t*2.1+i)>.9?.35:1;lamp.light.intensity=lamp.base*(.86+.14*Math.sin(t*(2+i*.3)+i))*blink;}}
   if(this.waterMat){const slide=this.waterMat.normalMap||this.waterMat.bumpMap;if(slide){slide.offset.x=t*.015;slide.offset.y=Math.sin(t*.2)*.01;}}

@@ -34,6 +34,17 @@ export function casing(parent, [width, height, depth], pos, material, edge = .06
     bevelThickness: r, bevelSegments: 3, steps: 1,
   });
   geometry.translate(0, 0, r - depth / 2);
+  const tile = material.userData.tileMeters;
+  if (tile) {
+    const {position, normal, uv} = geometry.attributes;
+    const repeat = material.map.repeat;
+    for (let i = 0; i < uv.count; i++) {
+      const side = Math.abs(normal.getX(i)) > .65;
+      const top = Math.abs(normal.getY(i)) > .65;
+      uv.setXY(i, (side ? position.getZ(i) : position.getX(i)) / (tile * repeat.x),
+        (top ? position.getZ(i) : position.getY(i)) / (tile * repeat.y));
+    }
+  }
   return add(parent, geometry, material, pos);
 }
 
@@ -104,7 +115,7 @@ export function generator(parent, x, z, era, frame, trim) {
   const iron = metal(era === 0 ? 0x536c60 : 0x566c72);
   const rust = metal(0x8a6446, .67);
   const dark = metal(0x354541);
-  cylinder(p, 2.37, .25, [0, .29, 0], trim, 2.48, 48);
+  cylinder(p, 2.37, .40, [0, .22, 0], trim, 2.48, 48);
   cylinder(p, 1.86, .25, [0, .52, 0], dark, 2.12, 48);
   cylinder(p, 1.76, 2.32, [0, 1.77, 0], iron, 1.94, 48);
   cylinder(p, 1.68, .37, [0, 3.10, 0], iron, 1.82, 48);
@@ -142,33 +153,38 @@ export function vessel(parent, x, z, frame, trim, future) {
     pipe(p, [[side * .63, 0, .44], [side * .63, .62, .44]], .07, trim);
   }
   pipe(p, [[0, 2.93, 0], [0, 3.48, 0], [0, 3.48, 3.3],
-    [0, 1.2, 3.3]], .13, trim, .37);
+    [0, .26, 3.3]], .13, trim, .37);
+  casing(p, [.52, .25, .52], [0, .145, 3.3], trim, .035);
+  cylinder(p, .19, .09, [0, .29, 3.3], frame, .19, 20);
   cylinder(p, .2, .11, [0, 3.13, 0], trim);
   if (!future) gauge(p, [0, 2.12, .84], .19, trim);
 }
 
-export function bench(parent, x, z, era, surface, frame, dark) {
+export function bench(parent, x, z, era, surface, frame, dark, display) {
   const p = groupAt(parent, [x, 0, z]);
   casing(p, [3, .11, 1.42], [0, .92, 0], surface, .05);
   for (const dx of [-1.25, 1.25]) {
-    pipe(p, [[dx, .015, -.53], [dx, .79, -.53], [dx, .79, .53],
+    pipe(p, [[dx, .015, -.53], [dx, .833, -.53], [dx, .833, .53],
       [dx, .015, .53]], .05, frame, .16);
   }
   pipe(p, [[-1.25, .27, -.52], [1.25, .27, -.52]], .04, frame);
   casing(p, [.78, .17, .83], [.65, .78, -.03], frame);
   pipe(p, [[.51, .8, .395], [.51, .8, .45], [.79, .8, .45], [.79, .8, .395]], .023, dark, .045);
   if (era > 0) {
-    casing(p, [.86, .51, era === 2 ? .09 : .21], [.86, 1.32, -.27], dark);
-    casing(p, [.77, .425, .024], [.86, 1.32, era === 2 ? -.212 : -.152],
-      metal(era === 2 ? 0x5f9ba2 : 0x304a4b, .26), .012);
+    const depth = era === 2 ? .09 : .21;
+    const front = -.27 + depth / 2;
+    casing(p, [.86, .51, depth], [.86, 1.32, -.27], dark);
+    const displaySize = [.70, .355];
+    if (display) display(p, [.86, 1.32, front + .009], displaySize);
+    else casing(p, [...displaySize, .018], [.86, 1.32, front + .008], dark, .006);
     pipe(p, [[.86, .98, -.31], [.86, 1.25, -.35]], .045, frame);
     casing(p, [.48, .027, .26], [.86, .985, -.31], dark, .01);
   } else {
     const cup = cylinder(p, .082, .135, [.86, 1.046, .31], metal(0xc3b6a0), .078);
     cylinder(p, .066, .008, [cup.position.x, 1.112, cup.position.z], metal(0x695143));
   }
-  casing(p, [.56, .035, .43], [-.22, .997, .25], metal(0x9c8060, .85), .017);
-  casing(p, [.52, .019, .41], [-.225, 1.016, .25], metal(0xe7ddc5, .95), .008);
+  casing(p, [.56, .035, .43], [-.64, .997, .28], metal(0x9c8060, .85), .017);
+  casing(p, [.52, .019, .41], [-.645, 1.026, .28], metal(0xe7ddc5, .95), .008);
 }
 
 export function chair(parent, x, z, era, frame, facing) {
@@ -233,13 +249,22 @@ export function valveBank(parent, pos, era, repaired) {
   const enamel = metal(era === 2 ? 0x789ca4 : 0x4d6f67, .57);
   const iron = metal(0x61756e);
   const flow = metal(repaired ? 0x46806c : 0x8b6049, .63);
-  casing(p, [2.72, .18, .8], [0, .1, -.09], iron);
-  pipe(p, [[-1.26, .46, .02], [1.26, .46, .02]], .147, iron);
+  casing(p, [2.72, .18, .8], [0, .11, -.09], iron);
+  const collector=cylinder(p,.147,2.55,[0,.46,.02],iron,.147,24);
+  collector.rotation.z=Math.PI/2;
+  for (const side of [-1,1]) {
+    const cap=cylinder(p,.179,.065,[side*1.27,.46,.02],enamel,.179,24);
+    cap.rotation.z=Math.PI/2;
+    casing(p,[.22,.29,.33],[side*.92,.327,.02],iron,.023);
+    casing(p,[.33,.064,.46],[side*.92,.225,.02],enamel,.018);
+  }
+  casing(p,[2.38,.19,.18],[0,2.36,.08],iron,.025);
   for (let i = 0; i < 3; i++) {
     const x = (i - 1) * .79;
     const body = cylinder(p, .24, .21, [x, 1.16, .09], repaired && i === 1 ? flow : enamel);
     body.rotation.x = Math.PI / 2;
-    pipe(p, [[x, .43, .02], [x, 2.29, .02], [x, 2.29, -.53]], .126, i === 1 ? flow : iron, .26);
+    pipe(p, [[x, .43, .02], [x, 2.29, .02], [x, 2.29, -.45], [x, 1.94, -.45], [x, .18, -.45]], .126, i === 1 ? flow : iron, .22);
+    cylinder(p,.162,.065,[x,.232,-.45],enamel,.162,20);
     for (const y of [.69, 1.46, 2.03]) cylinder(p, .188, .075, [x, y, .02], iron);
     const wheel = groupAt(p, [x, 1.16, .28]);
     wheel.rotation.z = repaired && i === 1 ? Math.PI / 4 : 0;
@@ -323,7 +348,7 @@ export function dressing(parent, era, layout = {}) {
     p.name = 'extinguisher';
     p.rotation.y = yaw;
     cylinder(p, .11, .62, [0, .48, 0], metal(0x9c4034, .48), .11, 12);
-    cylinder(p, .13, .06, [0, .16, 0], steel, .13, 12);
+    cylinder(p, .13, .16, [0, .098, 0], steel, .13, 12);
     cylinder(p, .045, .08, [0, .82, 0], steel, .05, 10);
     pipe(p, [[0, .84, 0], [.12, .92, 0], [.12, .98, .02]], .02, steel, .04);
   };
@@ -346,19 +371,21 @@ export function dressing(parent, era, layout = {}) {
   for (const [x, z] of layout.reel_stands || [[-33.5, 15.4], [33.2, -6.2]]) {
     const stand = groupAt(parent, [x, 0, z]);stand.name = 'reel-stand';
     casing(stand, [.75, .4, .65], [0, .2, 0], wood, .025);
-    reel(stand, [0, .445, 0], steel, metal(0x6a5340));
+    reel(stand, [0, .45, 0], steel, metal(0x6a5340));
   }
   for (const [x, z, yaw] of layout.signs || [[6.5, 8.4, .45], [-6.3, -8.6, -.35]]) {
     const p = groupAt(parent, [x, 0, z]);
     p.name = 'floor-sign';
     p.rotation.y = yaw;
     casing(p, [.42, .58, .035], [0, .4, 0], metal(0xd08a32, .58), .012);
+    for(const side of [-1,1])casing(p,[.095,.042,.195],[side*.14,.041,0],steel,.011);
     cylinder(p, .022, .62, [-.14, .32, .06], steel, .022, 6);
     cylinder(p, .022, .62, [.14, .32, -.06], steel, .022, 6);
   }
   for (const z of [-18, -6, 6, 18]) {
     const p = groupAt(parent, [0, 0, z]);
-    cylinder(p, .028, .85, [0, 7.2, 0], steel, .028, 8);
+    casing(p, [8.06, .13, .14], [0, 8.44, 0], steel, .024);
+    cylinder(p, .032, 1.73, [0, 7.592, 0], steel, .032, 12);
     cylinder(p, .26, .09, [0, 6.7, 0], shade, .32, 16);
     const bulb = add(p, new THREE.SphereGeometry(.075, 12, 8), metal(0xfff1cf, .3), [0, 6.58, 0]);
     bulb.material.emissive = new THREE.Color(era === 2 ? 0x9ad8d0 : 0xffd9a2);
@@ -409,7 +436,8 @@ export function roof(parent, era, steel, glass) {
   for (const z of [-26.95, 26.95]) {
     const bay = groupAt(parent, [0, 0, z]);
     for (let x = -32; x <= 32; x += 8) {
-      casing(bay, [7.62, 3.49, .034], [x, 3.74, 0], glass).castShadow = false;
+      const pane = add(bay, new THREE.PlaneGeometry(7.62, 3.49), glass, [x, 3.74, 0]);
+      pane.castShadow = false; pane.receiveShadow = false;
       for (const y of [2.1, 3.65, 5.36]) casing(bay, [7.73, .077, .2], [x, y, 0], rib);
       for (const dx of [-1.26, 1.26]) casing(bay, [.075, 3.22, .16], [x + dx, 3.74, 0], rib);
     }
@@ -418,7 +446,8 @@ export function roof(parent, era, steel, glass) {
     const bay = groupAt(parent, [x, 0, 0]);
     bay.rotation.y = Math.PI / 2;
     for (let z = -20; z <= 20; z += 8) {
-      casing(bay, [7.66, 3.49, .034], [z, 3.74, 0], glass).castShadow = false;
+      const pane = add(bay, new THREE.PlaneGeometry(7.66, 3.49), glass, [z, 3.74, 0]);
+      pane.castShadow = false; pane.receiveShadow = false;
       for (const y of [2.1, 3.65, 5.36]) casing(bay, [7.7, .077, .2], [z, y, 0], rib);
       for (const dz of [-1.26, 1.26]) casing(bay, [.075, 3.22, .16], [z + dz, 3.74, 0], rib);
     }

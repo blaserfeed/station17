@@ -7,6 +7,8 @@ from http.cookies import SimpleCookie
 from urllib.parse import urlparse,unquote
 from .core import apply,public_game,GameError,achievement
 from .content import VOICE_COMMANDS,GESTURES
+mimetypes.add_type('image/svg+xml','.svg')
+mimetypes.add_type('audio/wav','.wav')
 ROOT=Path(__file__).resolve().parents[1]
 DEFAULT_SETTINGS={'volume':35,'music':70,'effects':80,'large':False,'motion':True,'contrast':False,'graphics':1}
 

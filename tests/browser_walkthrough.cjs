@@ -56,7 +56,19 @@ const assert=require('node:assert/strict');
   await walk('s',1,22.6,true);await walk('d',0,6.15,true);
   await key('e');await page.getByRole('heading',{name:'Предохранитель портала'}).waitFor();
   console.log('Fuse collected');
-  await click('close');await walk('w',1,22.15,false);await key('r');await click('portal-repair');
+  await click('close');await walk('w',1,22.15,false);await key('r');
+  const tiles=ui('circuit');
+  assert.equal(await tiles.count(),9);
+  const positions=await tiles.evaluateAll(items=>items.map(tile=>{
+   const [x,y]=tile.style.backgroundPosition.split(' ').map(Number.parseFloat);
+   return y/50*3+x/50;
+  }));
+  for(let slot=0;slot<positions.length;slot++){
+   const pieceSlot=positions.indexOf(slot);
+   if(pieceSlot===slot)continue;
+   await click('circuit',slot);await click('circuit',pieceSlot);
+   [positions[slot],positions[pieceSlot]]=[positions[pieceSlot],positions[slot]];
+  }
   await page.waitForFunction(()=>chronoshov.state.game.portal.repaired);await click('close');
   await travel(2);
   pass('Picked up the fuse, powered the portal, opened it and crossed the physical threshold');

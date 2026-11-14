@@ -79,7 +79,7 @@ async function guideHint(){
  if(result.game.phase==='over'){startFlood(result);return;}
  const g=result.game;
  current.hint=!g.portal.repaired&&g.inventory.includes('portal_fuse')
-  ?'Цепь в форме U. Верхняя левая деталь: влево и вниз. Верхняя правая: вправо и вниз. Нижняя левая: вверх и вправо. Нижняя правая: вверх и влево.'
+  ?'На щите пазл 3×3. Нажмите фрагмент, затем другой — они поменяются местами. Соберите чертёж как на образце: солнце справа вверху, вода посередине, арка портала справа внизу.'
   :result.event.message;
  current.openHints=true;
  renderModal();
@@ -98,17 +98,23 @@ function pauseView(){
   <button data-ui="menu">В главное меню</button>
  </nav>${settingsPage?`<div class="settings-sheet"><h3>${tabs.find(([id])=>id===settingsPage)[1]}</h3>${content[settingsPage]()}</div>`:''}</section>`;
 }
-function outcomeText(g){const sergey=g.sergey==='killed'?'Сергея у входа больше нет. ':'Сергей ушёл проверять западный проход и опоздал к пульту. ';if(g.ending==='Возвращение')return 'Олег выходит из портала. Для него прошло несколько минут, для Анны — десять лет. Он видит взрослую дочь и не узнаёт её сразу. '+sergey+'Катушка вывела его из контура, линия Б открыла водосброс. Потерянные годы остаются потерянными. '+(g.warned?'Жителей предупредили: они успели покинуть низину и возвращаются домой.':'Жителей не предупредили. Водосброс открылся, но низина встретила воду людьми, которые не успели выйти.');if(g.ending==='Последняя смена')return 'Анна закрыла четвёртый контур. Город устоял. В приёмнике только «Я понял»: ни прощания, ни обещания, что голос вернётся. Олег остался между временами. '+(g.sergey==='killed'?'Сергей уже не может это оспорить.':'Сергей больше не может прятать решение 2016 года за старым отчётом.');return 'Первого пуска не было. Нет водохранилища, нет аварии и нет исчезновения Олега на станции. В долине другой город, и семья Анны никогда не работала на гидроузле. Приёмник иногда ловит знакомую мелодию. Анна не может объяснить, откуда она её знает.';}
+function outcomeText(g){
+ const sergey=g.sergey==='killed'?'Сергей больше не стоит у пульта: Анна убрала его с дороги до решения.':g.sergey==='outsmart'?'Сергей ушёл к западному проходу и не успел вмешаться.':'Сергей остался на станции, но решение уже принято.';
+ if(g.ending==='Возвращение')return 'Анна вывела отца из контура и открыла водосброс. Для Олега прошли минуты, для неё — десять лет: он видит взрослую дочь, а город остаётся на месте. Потерянные годы не возвращаются. '+sergey;
+ if(g.ending==='Последняя смена')return 'Анна не стала вытаскивать отца. Водосброс открылся, вода ушла мимо города, а Олег остался между временами: в ответ только «Я понял», без прощания и без обещания вернуться. '+sergey;
+ return 'Анна отменила первый пуск. Станции Ольхов нет: нет водохранилища, нет аварии и нет пропажи Олега. В долине другой город, семья Анны никогда здесь не работала. Мелодия в приёмнике — единственный след жизни, которую это решение стёрло.';
+}
 function resultView(){const g=state.game;return `<section class="result card"><div class="eyebrow">Расследование завершено</div><h1>${esc(g.ending)}</h1><p class="lead">${esc(outcomeText(g))}</p><div class="result-stats"><div><b>${g.P}</b><span>Очки</span></div><div><b>${g.C}/3</b><span>Согласованные узлы</span></div><div><b>${state.stats.endings}/3</b><span>Открытые финалы</span></div></div>${g.achievement?'<p class="gold">«Точная настройка» — без ошибочных проверок и подсказок.</p>':''}<div class="history">${g.history.map(t=>`<div>${esc(t)}</div>`).join('')}</div><div class="actions"><button class="primary" data-ui="new">Пройти иначе</button><button data-ui="menu">Главное меню</button></div></section>`;}
 function overView(){const g=state.game,kind=g.failure_kind,freshStart=kind==='timeout'||kind==='trapped',eyebrow=kind==='timeout'?'Время вышло':kind==='trapped'?'Портал не зажёгся':kind==='rupture'?'Линия А':'Связь потеряна',title=kind==='timeout'?'Авария на станции':kind==='trapped'?'Заперта в 1978':kind==='rupture'?'Труба разорвана':'Аварийное размыкание',note=kind==='trapped'?'Линия В замкнула контур. Портал не активируется, Анна остаётся в прошлом. Расследование начинается сначала.':kind==='timeout'?'При новой попытке начнётся новое расследование с полными 25 минутами. Доступ к финальной главе и открытые концовки сохранятся.':kind==='rupture'?'Труба лопнула. Контрольная точка сохранила записи: линию можно выбрать заново.':'Найденные документы и ремонт сохранены в контрольной точке перед решением.';return `<section class="result card"><div class="eyebrow">${eyebrow}</div><h1>${title}</h1><p class="lead">${esc(g.failure)}</p><p>${note}</p><div class="actions"><button class="primary" data-ui="retry">${freshStart?'Начать новую попытку':'Вернуться к решению'}</button><button data-ui="menu">Главное меню</button></div></section>`;}
-function openModal(next){if(next.type==='journal'&&modal&&['safe','bypass'].includes(modal.type))next.returnTo={puzzle:modal,selection:selected};modal=next;selected=0;if(next.type==='safe')modal.values=[0,0,0];if(next.type==='travel'){const g=state.game;selected=g.objective.stage===g.stage?(g.stage+1)%3:g.objective.stage;if(!g.portal.repaired&&g.inventory.includes('portal_fuse')){modal.values=[0,0,0,0];modal.max=3;}}controls.resetMotion();renderModal();active();}
+function openModal(next){if(next.type==='journal'&&modal&&['safe','bypass'].includes(modal.type))next.returnTo={puzzle:modal,selection:selected};modal=next;selected=0;if(next.type==='safe')modal.values=[0,0,0];if(next.type==='travel'){const g=state.game;selected=g.objective.stage===g.stage?(g.stage+1)%3:g.objective.stage;if(!g.portal.repaired&&g.inventory.includes('portal_fuse')){modal.values=[2,5,0,7,4,8,1,3,6];modal.held=null;}}controls.resetMotion();renderModal();active();}
 function closeModal(){controls.captureKey=null;if(modal?.type==='intro')voices.stop();modal=null;controls.resetMotion();renderModal();active();if(screen==='game'&&!modal)world.captureLook();}
 function dialView(labels,max){return `<div class="dial-grid">${modal.values.map((v,i)=>`<div class="dial-unit ${selected===i?'selected':''}"><span>${labels[i]}</span><button data-ui="dial" data-id="${i}:1" aria-label="Увеличить ${labels[i]}">+</button><b>${v}</b><button data-ui="dial" data-id="${i}:-1" aria-label="Уменьшить ${labels[i]}">−</button></div>`).join('')}</div><div class="actions"><button class="primary" data-ui="verify">Проверить</button><button data-ui="journal">Открыть записи</button><button data-ui="close">Вернуться</button></div><p class="small">1–3 меняют регулятор, F — проверка. Жесты: кулак/V — выбор, палец — поворот, жест прыжка — проверка. Голос: «проверить».</p>`;}
-function circuitView(){const path=r=>['M24 44 L24 24 L44 24','M4 24 L24 24 L24 44','M4 24 L24 24 L24 4','M24 4 L24 24 L44 24'][r];return `<p class="riddle">На кожухе выжжено: «Жила не идёт напрямик. С левой клеммы спустись, обойди снизу, выйди справа».</p><div class="circuit-board">${modal.values.map((r,i)=>`<button class="choice circuit-tile ${selected===i?'selected':''}" data-ui="circuit" data-id="${i}" aria-label="Повернуть звено ${i+1}"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="${path(r)}"></path></svg></button>`).join('')}</div><div class="actions"><button class="primary" data-ui="verify">Замкнуть цепь</button></div><p class="small">Нажмите звено, чтобы повернуть. Ток входит слева сверху и должен выйти справа сверху.</p>`;}
+function puzzlePos(piece){return `${(piece%3)*50}% ${Math.floor(piece/3)*50}%`;}
+function puzzleView(){const tile=(piece,i)=>`<button type="button" class="puzzle-tile ${selected===i?'selected':''} ${modal.held===i?'held':''}" data-ui="circuit" data-id="${i}" aria-label="Фрагмент ${i+1}" style="background-image:url('/assets/puzzle-station.svg');background-position:${puzzlePos(piece)}"></button>`;return `<p class="riddle">На панели разобран чертёж станции. Соберите его: девять фрагментов должны встать так же, как на образце.</p><div class="puzzle-layout"><div class="puzzle-board" role="group" aria-label="Пазл 3 на 3">${modal.values.map(tile).join('')}</div><figure class="puzzle-ref"><figcaption>Образец</figcaption><div style="background-image:url('/assets/puzzle-station.svg')"></div></figure></div><div class="actions"><button class="primary" data-ui="verify">Собрать пазл</button></div><p class="small">Нажмите фрагмент, затем другой — они поменяются местами. Питание включится, когда чертёж совпадёт с образцом.</p>`;}
 function renderModal(){const root=$('modal-layer');if(!modal){root.innerHTML='';return;}const g=state.game;let title='',body='';
- if(modal.type==='intro'){title='17:40. Голос отца';body='<div class="radio-transcript"><span>ОЛЕГ СОКОЛОВ</span><p>«Аня. Сначала клапан. Моя запись осталась за западным проходом. Не ищи меня, пока резерв не открыт».</p></div><p>Голос звучит так, будто отец замолчал на минуту, а не на десять лет. На записи стоит сегодняшняя дата. Архивной плёнкой 2016 года это быть не может.</p><p>Сергей у входа не удивлён и не хочет говорить об Олеге. Он показывает обесточенный портал: «Здесь иногда появляются вещи, которые не должны существовать».</p><p>Сначала найдите предохранитель у щитка. Загадка цепи выжжена на крышке: жила не идёт напрямик.</p><p class="circuit-status">25 минут до аварии. Время идёт и в других эпохах. Esc — пауза.</p><blockquote id="anna-intro-line">'+annaLines.intro+'</blockquote><button class="primary" data-ui="close">К порталу</button>';}
+ if(modal.type==='intro'){title='17:40. Голос отца';body='<div class="radio-transcript"><span>ОЛЕГ СОКОЛОВ</span><p>«Аня. Сначала клапан. Моя запись осталась за западным проходом. Не ищи меня, пока резерв не открыт».</p></div><p>Голос звучит так, будто отец замолчал на минуту, а не на десять лет. На записи стоит сегодняшняя дата. Архивной плёнкой 2016 года это быть не может.</p><p>Сергей у входа не удивлён и не хочет говорить об Олеге. Он показывает обесточенный портал: «Здесь иногда появляются вещи, которые не должны существовать».</p><p>Сначала найдите предохранитель у щитка. На панели пазл: чертёж станции из девяти фрагментов.</p><p class="circuit-status">25 минут до аварии. Время идёт и в других эпохах. Esc — пауза.</p><blockquote id="anna-intro-line">'+annaLines.intro+'</blockquote><button class="primary" data-ui="close">К порталу</button>';}
  else if(modal.type==='clue'){title=modal.clue.name;body=`<div class="eyebrow">${modal.clue.year||g.epoch.year} · ${esc(modal.clue.room||'Станция')}</div><p class="document-text">${esc(modal.clue.text)}</p><p class="small">Запись сохранена в журнале (J).</p><div class="actions"><button class="primary" data-ui="close">Вернуться</button><button data-ui="journal">Все записи</button></div>`;}
- else if(modal.type==='journal'){title='Записи Анны';body=`<div class="quest-summary"><strong>${esc(g.objective.title)}</strong><p>${esc(g.objective.text)}</p></div><p class="era-note">${esc(g.epoch.intro)}</p><p class="small">${esc(g.epoch.world_note||'')}</p><div class="case-progress"><span class="${g.portal.repaired?'done':''}">1. Цепь портала</span><span class="${g.repairs.valve?'done':''}">2. Резерв</span><span class="${g.can_return?'done':''}">3. Катушка отца</span></div>${g.notes.map(n=>`<details class="journal-entry" ${n.story?'open':''}><summary>${n.year} · ${esc(n.name)}</summary><p>${esc(n.text)}</p></details>`).join('')}<div class="actions">${modal.returnTo?'<button class="primary" data-ui="back-puzzle">Вернуться к прибору</button>':''}<button data-ui="travel">Где портал?</button><button data-ui="close">Закрыть журнал</button></div>`;}
+ else if(modal.type==='journal'){title='Записи Анны';body=`<div class="quest-summary"><strong>${esc(g.objective.title)}</strong><p>${esc(g.objective.text)}</p></div><p class="era-note">${esc(g.epoch.intro)}</p><p class="small">${esc(g.epoch.world_note||'')}</p><div class="case-progress"><span class="${g.portal.repaired?'done':''}">1. Пазл щитка</span><span class="${g.repairs.valve?'done':''}">2. Резерв</span><span class="${g.can_return?'done':''}">3. Катушка отца</span></div>${g.notes.map(n=>`<details class="journal-entry" ${n.story?'open':''}><summary>${n.year} · ${esc(n.name)}</summary><p>${esc(n.text)}</p></details>`).join('')}<div class="actions">${modal.returnTo?'<button class="primary" data-ui="back-puzzle">Вернуться к прибору</button>':''}<button data-ui="travel">Где портал?</button><button data-ui="close">Закрыть журнал</button></div>`;}
  else if(modal.type==='safe'){title=g.safe_open?'Архивный сейф открыт':'Сейф семейного дела';body=g.safe_open?'<p>Письмо в журнале: Сергей предатель. С ним нужно решить до пульта — увести или убрать с дороги.</p><button data-ui="journal">Прочитать письмо</button><button data-ui="close">Вернуться</button>':`<p>Три цифры, по одной в комнатах 1978 года. Архив — шкаф, турбинный зал — полка, диспетчерская — дело. Порядок тот же: шкаф, полка, дело.</p>${dialView(['Шкаф','Полка','Дело'],9)}`;}
  else if(modal.type==='bypass'){
   title='Западный клапан · 1978';
@@ -124,10 +130,10 @@ function renderModal(){const root=$('modal-layer');if(!modal){root.innerHTML='';
  else if(modal.type==='finale'){
   title='Аварийный пульт · 2026';
   if(!g.can_finish)body='<p>Сначала откройте резерв в 1978 году. Пульт заработает после этого.</p><div class="actions"><button class="primary" data-ui="travel">Выбрать эпоху</button><button data-ui="close">Вернуться</button></div>';
-  else if(!g.can_return)body=`<p>Водосброс готов. Без катушки из 2074 года отца не вернуть.</p><div class="stack"><button class="choice primary" data-ui="travel">К порталу в 2074 год</button><button class="choice" data-ui="finish" data-id="seal">Только спасти город</button><button class="choice" data-ui="finish" data-id="erase">Отменить пуск станции</button><button class="choice danger" data-ui="unsafe">Передать сигнал без записи</button></div><button data-ui="close">Пока не решать</button>`;
+  else if(!g.can_return)body=`<p>Водосброс готов. Без катушки из 2074 года отца не вернуть — можно спасти только город или отменить сам пуск.</p><div class="stack"><button class="choice primary" data-ui="travel">К порталу в 2074 год</button><button class="choice" data-ui="finish" data-id="seal">Только спасти город<small>Вода уйдёт мимо долины. Отец останется между временами.</small></button><button class="choice" data-ui="finish" data-id="erase">Отменить пуск станции<small>Станции не будет. Не будет ни аварии, ни этой семьи на гидроузле.</small></button><button class="choice danger" data-ui="unsafe">Передать сигнал без записи</button></div>`;
   else if(!g.inventory.includes('letter'))body='<p>Катушка на месте, но возвращать отца рано. Сначала письмо в архивном сейфе: Сергей предатель, и это нужно знать до тумблера.</p><div class="actions"><button class="primary" data-ui="close">К сейфу</button></div>';
   else if(!g.sergey)body='<p>Письмо уже у Анны. Сергей всё ещё стоит у входа. Уведите его или уберите с дороги — потом пульт.</p><div class="actions"><button class="primary" data-ui="npc">К Сергею</button><button data-ui="close">Отойти</button></div>';
-  else body=`<p>Тумблеры стёрты: у этого пульта уже стояли и выбирали, что разомкнуть.</p><p>Путь свободен. Можно вернуть отца и открыть водосброс. Предупреждение жителей меняет только этот финал.</p><div class="stack"><button class="choice primary" data-ui="finish" data-id="return">Вернуть отца и открыть водосброс</button><button class="choice" data-ui="finish" data-id="seal">Только спасти город</button><button class="choice" data-ui="finish" data-id="erase">Отменить пуск станции</button></div><div class="actions"><button data-ui="warn">${g.warned?'Жители предупреждены':'Предупредить жителей'}</button><button data-ui="close">Пока не решать</button></div>${state.full_access?'':'<p class="small">Финальные решения открываются учебной покупкой без списания.</p>'}`;
+  else body=`<p>Путь к пульту свободен. Каждое решение меняет и город, и отца.</p><div class="stack"><button class="choice primary" data-ui="finish" data-id="return">Вернуть отца и открыть водосброс<small>Олег выйдет к Анне. Город устоит. Десять лет не вернуть.</small></button><button class="choice" data-ui="finish" data-id="seal">Только спасти город<small>Вода уйдёт мимо долины. Отец останется между временами.</small></button><button class="choice" data-ui="finish" data-id="erase">Отменить пуск станции<small>Станции не будет. Не будет ни аварии, ни этой семьи на гидроузле.</small></button></div>${state.full_access?'':'<p class="small">Финальные решения открываются учебной покупкой без списания.</p>'}`;
  }
  else if(modal.type==='blocked'){title='Сначала письмо';body='<p>Возвращать отца рано. В архивном сейфе письмо: Сергей предатель. Код собран из архива, турбинного зала и диспетчерской 1978 года.</p><div class="actions"><button class="primary" data-ui="close">Идти к сейфу</button></div>';}
  else if(modal.type==='unsafe'){title='Сигнал не согласован';body='<p>Принудительный импульс может оборвать связь. Автоматика остановит запуск, если фазы не совпадут.</p><div class="actions"><button class="danger" data-ui="finish" data-id="unsafe">Всё равно передать</button><button data-ui="finale">Вернуться к решению</button></div>';}
@@ -137,8 +143,8 @@ function renderModal(){const root=$('modal-layer');if(!modal){root.innerHTML='';
   const portal=g.portal;
   if(!portal.repaired){
    body=g.inventory.includes('portal_fuse')
-    ?`<p>Предохранитель на месте. Поверните четыре звена, пока жила не обойдёт щиток снизу.</p>${circuitView()}`
-    :'<p>Предохранитель перегорел. Возьмите запасной в ящике справа: на крышке выжжена загадка цепи.</p>';
+    ?`<p>Предохранитель на месте. Соберите чертёж на щите.</p>${puzzleView()}`
+    :'<p>Предохранитель перегорел. Возьмите запасной в ящике справа: пазл собирается здесь, на щитке.</p>';
   }else{
    body=`<p>Выберите эпоху на щитке, затем пройдите сквозь светящийся портал.</p><div class="time-choices">${g.epochs.map(e=>`<button class="choice time-choice ${e.stage===selected?'selected':''}" data-ui="travel-to" data-id="${e.stage}" ${e.stage===g.stage?'disabled':''}><b>${e.year}</b><span>${esc(e.name)}</span><small>${e.stage===g.stage?'Вы здесь':e.stage===portal.target?'Проход открыт':'Открыть проход'}</small></button>`).join('')}</div><p class="small">Клавиши 1–3 открывают проход. Затем войдите в арку.</p>`;
   }
@@ -164,7 +170,7 @@ async function verify(){
 }
 async function interact(){if(modal){confirm();return;}if(screen!=='game'||busy)return;const n=world.nearest();if(!n){toast('Подойдите ближе и наведите взгляд на предмет.');return;}if(n.type==='clue')await action('collect',{id:n.id,position:world.position()});else openModal({type:n.type});}
 function confirm(){if(!modal){if(screen==='start')go('menu');return;}if(modal.type==='safe'&&!state.game.safe_open){ui('dial',selected+':1');return;}if(modal.type==='travel'&&modal.values&&!state.game.portal.repaired){ui('circuit',String(selected));return;}if(modal.type==='bypass'&&!state.game.repairs.valve&&['signature','carrier','delay'].every(id=>state.game.inventory.includes(id))){verify();return;}if(modal.type==='travel'&&state.game.portal.repaired){openPortal(selected);return;}const items=$('modal-layer').querySelectorAll('.choice:not(:disabled)');if(items.length)items[selected%items.length].click();else $('modal-layer').querySelector('button:not(:disabled)')?.click();}
-function command(cmd,source){if(cmd==='binding-changed'){renderModal();return;}if(cinematic||!state||!world)return;if(!$('finale-scene').hidden){if(cmd==='pause')skipOverlay();return;}if(transferring&&cmd!=='pause')return;if(['travel','journal','hint','jump'].includes(cmd)&&(screen!=='game'||state.game?.phase!=='explore'))return;if(cmd==='microphone'){controls.toggleVoice();return;}if(cmd==='gestures'){controls.toggleCamera();return;}if(cmd==='view'){world.toggleView();render();return;}if(cmd.startsWith('look-'))return;if(cmd==='travel'&&state.game){if(modal?.type==='travel')closeModal();else showPortalPanel();return;}if(cmd==='circuit-check'){verify();return;}if(cmd==='pause'){if(transferring)return;if(modal?.type==='intro')closeModal();else if(screen==='game')go('pause');else if(screen==='pause')continueGame();return;}if(cmd==='resume'){if(modal)closeModal();else continueGame();return;}if(cmd==='journal'&&state.game){openModal({type:'journal'});return;}if(cmd==='hint'){showHint();return;}if(cmd==='interact'||cmd==='confirm'){interact();return;}if(cmd==='jump'){if(modal)verify();else world.jump();return;}if(cmd.startsWith('navigate-')){if(!modal)return;const direction=cmd.slice(9);if(['left','right'].includes(direction)){const count=modal.values?.length||$('modal-layer').querySelectorAll('.choice').length||1;selected=(selected+(direction==='right'?1:-1)+count)%count;renderModal();}else if(modal.values&&['forward','back'].includes(direction))ui('dial',selected+':'+(direction==='forward'?1:-1));return;}if(cmd.startsWith('choice')&&modal){const n=Number(cmd.slice(6))-1;if(modal.values&&n<modal.values.length)ui('dial',n+':1');else if(modal.type==='bypass'&&n<3&&!state.game.repairs.valve)ui('select-pipe',String(n));else if(modal.type==='travel'&&n<3&&state.game.portal.repaired)openPortal(n);else if(modal.type==='travel'&&modal.values&&n<modal.values.length)ui('circuit',String(n));else{selected=n;confirm();}return;}if(cmd==='start'&&['start','menu'].includes(screen))newGame();if(cmd==='retry'&&screen==='over')action('retry');}
+function command(cmd,source){if(cmd==='binding-changed'){renderModal();return;}if(cinematic||!state||!world)return;if(!$('finale-scene').hidden){if(cmd==='pause')skipOverlay();return;}if(transferring&&cmd!=='pause')return;if(['travel','journal','hint','jump'].includes(cmd)&&(screen!=='game'||state.game?.phase!=='explore'))return;if(cmd==='microphone'){controls.toggleVoice();return;}if(cmd==='gestures'){controls.toggleCamera();return;}if(cmd==='view'){world.toggleView();render();return;}if(cmd.startsWith('look-'))return;if(cmd==='travel'&&state.game){if(modal?.type==='travel')closeModal();else showPortalPanel();return;}if(cmd==='circuit-check'){verify();return;}if(cmd==='pause'){if(transferring)return;if(modal?.type==='intro')closeModal();else if(screen==='game')go('pause');else if(screen==='pause')continueGame();return;}if(cmd==='resume'){if(modal)closeModal();else continueGame();return;}if(cmd==='journal'&&state.game){openModal({type:'journal'});return;}if(cmd==='hint'){showHint();return;}if(cmd==='interact'||cmd==='confirm'){interact();return;}if(cmd==='jump'){if(modal)verify();else world.jump();return;}if(cmd.startsWith('navigate-')){if(!modal)return;const direction=cmd.slice(9);if(modal.type==='travel'&&modal.values?.length===9){const delta=direction==='right'?1:direction==='left'?-1:direction==='back'?3:direction==='forward'?-3:0;if(delta){selected=(selected+delta+9)%9;renderModal();}return;}if(['left','right'].includes(direction)){const count=modal.values?.length||$('modal-layer').querySelectorAll('.choice').length||1;selected=(selected+(direction==='right'?1:-1)+count)%count;renderModal();}else if(modal.values&&['forward','back'].includes(direction))ui('dial',selected+':'+(direction==='forward'?1:-1));return;}if(cmd.startsWith('choice')&&modal){const n=Number(cmd.slice(6))-1;if(modal.type==='travel'&&modal.values&&n<modal.values.length)ui('circuit',String(n));else if(modal.values&&n<modal.values.length)ui('dial',n+':1');else if(modal.type==='bypass'&&n<3&&!state.game.repairs.valve)ui('select-pipe',String(n));else if(modal.type==='travel'&&n<3&&state.game.portal.repaired)openPortal(n);else{selected=n;confirm();}return;}if(cmd==='start'&&['start','menu'].includes(screen))newGame();if(cmd==='retry'&&screen==='over')action('retry');}
 function continueGame(){if(!state||!world)return;if(state.game?.phase==='over'&&['timeout','rupture','trapped'].includes(state.game.failure_kind)){startFlood({game:state.game});return;}if(!state.game){newGame();return;}const restore=pausedModal;pausedModal=null;go(state.game.phase==='results'?'results':state.game.phase==='over'?'over':'game');if(screen==='game'&&restore){modal=restore.puzzle;selected=restore.selection;renderModal();active();}if(screen==='results')playFinale(state.game);if(screen==='game'&&!modal)world.captureLook();}
 async function newGame(){if(state.game&&!['results','over'].includes(state.game.phase)){openModal({type:'restart'});return;}await action('new');}
 function showPortalPanel(){
@@ -216,13 +222,25 @@ function showHint(){
  go('pause');
  openModal({type:'help',openHints:true});
 }
+function swapPuzzle(index){
+ if(modal?.type!=='travel'||modal.values?.length!==9)return;
+ index=Number(index);
+ if(!Number.isInteger(index)||index<0||index>8)return;
+ selected=index;
+ if(modal.held==null||modal.held===index){modal.held=modal.held===index?null:index;renderModal();return;}
+ const from=modal.held;
+ [modal.values[from],modal.values[index]]=[modal.values[index],modal.values[from]];
+ modal.held=null;
+ renderModal();
+ if(modal.values.every((piece,slot)=>piece===slot))verify();
+}
 async function ui(name,id){if(cinematic||!state||!world)return;if(busy&&!['close','pause','menu','help'].includes(name))return;if(name==='hint'){showHint();return;}
  if(name==='settings-tab'&&screen==='pause'&&['sound','display'].includes(id)){settingsPage=settingsPage===id?null:id;render();$('screen').querySelector(`[data-id="${id}"]`).focus();return;}
  if(name==='guide-hint'){await guideHint();return;}
  if(name==='rebind'&&modal?.type==='help'&&Object.hasOwn(bindings,id)){
   controls.resetMotion();controls.captureKey=id;renderModal();return;
  }
- if(name==='reset-bindings'&&modal?.type==='help'){controls.resetBindings();renderModal();return;}if(name==='back-puzzle'&&modal?.returnTo){({puzzle:modal,selection:selected}=modal.returnTo);renderModal();return;}if(name==='dial'&&modal?.values){const [i,d]=id.split(':').map(Number),max=modal.max??9;selected=i;modal.values[i]=(modal.values[i]+d+max+1)%(max+1);renderModal();return;}if(name==='verify'){await verify();return;}if(name==='select-pipe'&&modal?.type==='bypass'){selected=Number(id);renderModal();return;}if(name==='finish'){if(id!=='unsafe'&&!state.full_access){ui('shop');return;}await action('finish',{id,position:world.position()});return;}if(name==='npc'){openModal({type:'npc'});return;}if(name==='circuit'&&modal?.values){selected=Number(id);modal.values[selected]=(modal.values[selected]+1)%4;renderModal();return;}if(name==='talk'){const r=await action('talk',{intent:id,position:world.position()});if(r&&id==='outsmart'&&r.game.sergey==='outsmart'){closeModal();world.startDeparture();}else if(r&&id==='confession'&&r.game.phase==='explore')playConfession();else if(r?.game.phase==='explore')openModal({type:'npc'});return;}if(name==='warn'){await action('warn',{position:world.position()});renderModal();return;}if(name==='menu'){go('menu');return;}if(name==='continue'||name==='resume'){continueGame();return;}if(name==='new'){newGame();return;}if(name==='new-confirm'){await action('new');return;}if(name==='retry'){await action('retry');world.captureLook();return;}if(name==='view'){command('view');return;}if(name==='pause'){go('pause');return;}if(name==='travel'){showPortalPanel();return;}if(name==='travel-to'){await openPortal(Number(id));return;}if(name==='portal-repair'&&modal?.type==='travel'){await action('portal_repair',{position:world.position()});return;}if(name==='close'){closeModal();return;}if(name==='shop'){const r=await post('/api/checkout');if(r?.event.order_id)openModal({type:'shop',order:r.event.order_id});else if(r)toast('Финальная глава уже открыта.');return;}if(name==='payment'){const order=modal.order;const r=await post('/api/sandbox/confirm',{order_id:order,outcome:id});if(r){modal=id==='success'?{type:'bought'}:id==='failure'?{type:'shop',order}:null;render();}return;}if(['help','journal','stats','finale','unsafe'].includes(name))openModal({type:name});}
+ if(name==='reset-bindings'&&modal?.type==='help'){controls.resetBindings();renderModal();return;}if(name==='back-puzzle'&&modal?.returnTo){({puzzle:modal,selection:selected}=modal.returnTo);renderModal();return;}if(name==='dial'&&modal?.values){const [i,d]=id.split(':').map(Number),max=modal.max??9;selected=i;modal.values[i]=(modal.values[i]+d+max+1)%(max+1);renderModal();return;}if(name==='verify'){await verify();return;}if(name==='select-pipe'&&modal?.type==='bypass'){selected=Number(id);renderModal();return;}if(name==='finish'){if(id!=='unsafe'&&!state.full_access){ui('shop');return;}await action('finish',{id,position:world.position()});return;}if(name==='npc'){openModal({type:'npc'});return;}if(name==='circuit'&&modal?.values){swapPuzzle(id);return;}if(name==='talk'){const r=await action('talk',{intent:id,position:world.position()});if(r&&id==='outsmart'&&r.game.sergey==='outsmart'){closeModal();world.startDeparture();}else if(r&&id==='confession'&&r.game.phase==='explore')playConfession();else if(r?.game.phase==='explore')openModal({type:'npc'});return;}if(name==='warn'){await action('warn',{position:world.position()});renderModal();return;}if(name==='menu'){go('menu');return;}if(name==='continue'||name==='resume'){continueGame();return;}if(name==='new'){newGame();return;}if(name==='new-confirm'){await action('new');return;}if(name==='retry'){await action('retry');world.captureLook();return;}if(name==='view'){command('view');return;}if(name==='pause'){go('pause');return;}if(name==='travel'){showPortalPanel();return;}if(name==='travel-to'){await openPortal(Number(id));return;}if(name==='portal-repair'&&modal?.type==='travel'){await action('portal_repair',{position:world.position()});return;}if(name==='close'){closeModal();return;}if(name==='shop'){const r=await post('/api/checkout');if(r?.event.order_id)openModal({type:'shop',order:r.event.order_id});else if(r)toast('Финальная глава уже открыта.');return;}if(name==='payment'){const order=modal.order;const r=await post('/api/sandbox/confirm',{order_id:order,outcome:id});if(r){modal=id==='success'?{type:'bought'}:id==='failure'?{type:'shop',order}:null;render();}return;}if(['help','journal','stats','finale','unsafe'].includes(name))openModal({type:name});}
 function status(kind,text,on=false){if(kind==='voice'){station.setListening(on);$('voice-status').textContent=text==='Микрофон выключен.'?'':text;$('voice-toggle').setAttribute('aria-pressed',String(on));$('voice-toggle').textContent=on?'Выключить микрофон':'Микрофон';}else{$('gesture-label').textContent=text;$('gesture-toggle').setAttribute('aria-pressed',String(on));$('gesture-toggle').textContent=on?'Выключить жесты':'Жесты';if(!on)toast(text);}}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-ui]');if(b&&!b.disabled)ui(b.dataset.ui,b.dataset.id);});document.addEventListener('change',e=>{if(['volume','music','effects'].includes(e.target.id))post('/api/settings',{settings:{[e.target.id]:Number(e.target.value)}}).then(()=>render());if(e.target.id==='graphics')post('/api/settings',{settings:{graphics:Number(e.target.value)}}).then(()=>render());if(e.target.dataset.setting)post('/api/settings',{settings:{[e.target.dataset.setting]:e.target.checked}}).then(()=>render());});document.addEventListener('input',e=>{if(['volume','music','effects'].includes(e.target.id)){const label=$(e.target.id+'-value');if(label)label.textContent=e.target.value;}});
 $('view-toggle').onclick=()=>command('view');$('brand').onclick=e=>{e.preventDefault();go('menu');};$('voice-toggle').onclick=()=>controls.toggleVoice();$('gesture-toggle').onclick=()=>controls.toggleCamera();$('swap-hands').onclick=()=>controls.swapHands();$('camera-stop').onclick=()=>controls.stopCamera();$('pause-toggle').onclick=()=>screen==='game'?go('pause'):continueGame();$('help-toggle').onclick=()=>openModal({type:'help'});
@@ -302,38 +320,50 @@ function playConfession(){
  next(0);
 }
 
+function endingScript(g){
+ const killed=g.sergey==='killed';
+ if(g.ending==='Возвращение')return {shot:'return',lines:[
+  ['Олег Соколов','Аня… это правда ты?','oleg'],
+  ['Анна Соколова','Да, пап. Для тебя прошло несколько минут. Для меня — десять лет.','anna-end-return-a'],
+  ['Анна Соколова','Катушка вывела тебя из контура, а линия Б открыла водосброс. Город останется на месте.','anna-end-return-b'],
+  ['Анна Соколова','Эти годы я тебе не верну. Ты видишь взрослую дочь, а я — отца, который не постарел.','anna-end-return-c'],
+  ['Анна Соколова',killed?'Сергея у пульта больше нет. Он не успел снова разомкнуть контур. Это решение теперь наше: ты здесь, и долина цела.':'Сергей вышел через дверь станции и не стоит у пульта. Он опоздал к выбору, который когда-то сделал за нас. Ты здесь, и долина цела.',killed?'anna-end-return-d-killed':'anna-end-return-d-away'],
+ ]};
+ if(g.ending==='Последняя смена')return {shot:'seal',lines:[
+  ['Анна Соколова','Я не стала вытаскивать тебя, пап. Я выбрала город.','anna-end-seal-a'],
+  ['Анна Соколова','Четвёртый контур остался закрыт. Водосброс открылся, и вода ушла мимо домов в низине.','anna-end-seal-b'],
+  ['Анна Соколова','В приёмнике одно слово: я понял. Ты остался между временами, без прощания и без обещания вернуться.','anna-end-seal-c'],
+  ['Анна Соколова',killed?'Сергей уже не скажет, что выбирал станцию. Я выбрала её сама. Город жив. Тебя я не дождалась.':g.sergey==='outsmart'?'Сергей больше не спрячет то, что сделал в две тысячи шестнадцатом. Теперь это моё: город жив, а я не дождалась тебя.':'Сергей остался на станции. Отменить это он уже не сможет: город жив, а тебя я не дождалась.',killed?'anna-end-seal-d-killed':g.sergey==='outsmart'?'anna-end-seal-d-away':'anna-end-seal-d-here'],
+ ]};
+ return {shot:'erase',lines:[
+  ['Анна Соколова','Я отменила первый пуск. Станцию Ольхов не построили.','anna-end-erase-a'],
+  ['Анна Соколова','Нет водохранилища и нет аварии. Ты не пропадал: ты жив, но никогда не работал здесь и не знаешь меня.','anna-end-erase-b'],
+  ['Анна Соколова','В долине другой город. Людей никто не эвакуировал: топить их стало нечему. Я спасла их тем, что стёрла причину.','anna-end-erase-c'],
+  ['Анна Соколова','Вместе с причиной стёрлись и эти десять лет. Мелодия в приёмнике — всё, что от них осталось. Объяснить её больше некому, потому что той жизни не было.','anna-end-erase-d'],
+ ]};
+}
 function playFinale(g){
  if(!g)return;
  clearFinale();
- const motion=state.settings.motion!==false;
- const reunion=g.ending==='Возвращение'&&world.startReunion(motion);
-
- const overlay=$('finale-scene');
- overlay.classList.toggle('reunion',reunion);
- const endingLine=g.ending==='Чистый лист'?'erase':'seal';
- $('finale-speaker').textContent=reunion?'Олег Соколов':'Анна Соколова';
- if(reunion)$('finale-line').textContent='Аня… это правда ты?';
+ const script=endingScript(g),motion=state.settings.motion!==false,overlay=$('finale-scene');
+ if(!(script.shot==='return'&&world.startReunion(motion)))world.startEnding(script.shot,motion);
+ if(script.shot==='erase')world.setMemory(true);
+ overlay.classList.add('reunion');
  overlay.hidden=false;
  document.body.classList.add('finale');
  station.duck();
- if(!reunion&&motion)world.setMemory(true);
- if(reunion){
-  const answer=()=>{
-   $('finale-speaker').textContent='Анна Соколова';
-   speakAnna('return',$('finale-line'));
-   finaleTimer=setTimeout(closeFinale,4400);
-  };
-  finaleTimer=setTimeout(answer,4300);
-  voices.play('oleg',state.settings).then(played=>{
-   if(played&&!overlay.hidden&&$('finale-speaker').textContent==='Олег Соколов'){
-    clearTimeout(finaleTimer);
-    finaleTimer=setTimeout(answer,Math.max(360,motion?750:0));
-   }
-  });
- }else{
-  speakAnna(endingLine,$('finale-line'));
-  finaleTimer=setTimeout(()=>{closeFinale();finaleTimer=setTimeout(()=>showEpilogue(true),1600);},6500);
+ function next(index){
+  if(overlay.hidden)return;
+  if(index===script.lines.length){closeFinale();return;}
+  const [speaker,line,voice]=script.lines[index];
+  $('finale-speaker').textContent=speaker;
+  $('finale-line').textContent=line;
+  let advanced=false;
+  const advance=()=>{if(advanced||overlay.hidden)return;advanced=true;clearTimeout(finaleTimer);next(index+1);};
+  finaleTimer=setTimeout(advance,Math.max(5200,line.length*85));
+  voices.play(voice,state.settings).then(played=>{if(played&&!advanced&&!overlay.hidden){clearTimeout(finaleTimer);finaleTimer=setTimeout(advance,motion?800:360);}});
  }
+ next(0);
 }
 function closeFinale(){
  clearTimeout(finaleTimer);
@@ -341,13 +371,14 @@ function closeFinale(){
  $('finale-scene').hidden=true;
  document.body.classList.remove('finale');
  world?.endReunion();
+ world?.endEnding();
  if(world?.confession){world.endConfession();active();}
  voices.stop();
  world?.setMemory(false);
  station.restore();
 }
 function showEpilogue(hold){$('epilogue').hidden=false;epilogueTimer=setTimeout(()=>{$('epilogue').hidden=true;},hold?4200:1800);}
-function skipOverlay(){if(cinematic){endFlood();return;}if(!$('finale-scene').hidden){const flashback=!!world.confession;closeFinale();if(!flashback)showEpilogue(false);return;}if(!$('epilogue').hidden){clearTimeout(epilogueTimer);$('epilogue').hidden=true;}}
+function skipOverlay(){if(cinematic){endFlood();return;}if(!$('finale-scene').hidden){closeFinale();return;}if(!$('epilogue').hidden){clearTimeout(epilogueTimer);$('epilogue').hidden=true;}}
 $('skip-cinematic').onclick=endFlood;$('skip-finale').onclick=skipOverlay;
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&screen==='game')go('pause');else active();});
 addEventListener('pagehide',()=>{if(!world||state?.game?.phase!=='explore')return;const data={kind:'clock',payload:{running:false,position:world.position()},request_id:crypto.randomUUID(),revision:state.revision};navigator.sendBeacon('/api/action',new Blob([JSON.stringify(data)],{type:'application/json'}));});

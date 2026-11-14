@@ -63,8 +63,8 @@ def objective(g):
  portal=portal_state(g)
  if not portal['repaired']:
   if 'portal_fuse' not in g['inventory']:
-   return dict(title='Найти предохранитель',text='Возьмите запасной предохранитель в ящике справа от портала. Загадка цепи выжжена на крышке.',stage=1,room='Главный зал',target=PORTAL_FUSE)
-  return dict(title='Замкнуть цепь',text='Подойдите к щитку и откройте панель. Поверните детали, чтобы соединить левый и правый контакты через нижний ряд.',stage=1,room='Главный зал',target=PORTAL_CONSOLE)
+   return dict(title='Найти предохранитель',text='Возьмите запасной предохранитель в ящике справа от портала. Пазл собирается на щитке.',stage=1,room='Главный зал',target=PORTAL_FUSE)
+  return dict(title='Собрать пазл',text='Подойдите к щитку и откройте панель. Соберите чертёж станции из девяти фрагментов.',stage=1,room='Главный зал',target=PORTAL_CONSOLE)
  if not g['repairs']['valve']:
   if 'signature' not in g['inventory']:
    goal=dict(title='Архив 1978',text='Подойдите к столу в архиве и взаимодействуйте, чтобы взять ведомость.',stage=0,room='Архив',target=[-28,-18])
@@ -165,15 +165,15 @@ def apply(game,kind,data,full=False,now=None):
    event.update(message='Питание уже восстановлено. Выберите эпоху на щитке.',sound='success')
   else:
    if 'portal_fuse' not in g['inventory']:raise GameError('Возьмите запасной предохранитель у портала.')
-   circuit=_digits(data,'circuit',4,3)
+   circuit=_digits(data,'circuit',9,8)
    if circuit!=PORTAL_CIRCUIT:
     g['total_errors']+=1
-    event.update(message='Цепь не замкнулась. Жила не идёт напрямик: с левой клеммы вниз, обход снизу, выход справа.',sound='error')
+    event.update(message='Пазл ещё не собран. Поменяйте фрагменты местами, пока чертёж не совпадёт с образцом.',sound='error')
    else:
     g['portal']['repaired']=True
-    _record(g,'2026: цепь портала замкнута, питание восстановлено.')
+    _record(g,'2026: чертёж на щитке собран, питание портала восстановлено.')
     checkpoint(g)
-    event.update(message='Цепь замкнулась. Выберите год на щитке и войдите в светящийся проход.',sound='success')
+    event.update(message='Чертёж собран. Выберите год на щитке и войдите в светящийся проход.',sound='success')
  elif kind=='portal_open':
   g['position']=proximity(data,PORTAL_CONSOLE)
   if not g['portal']['repaired']:raise GameError('Сначала восстановите питание портала.')

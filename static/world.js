@@ -132,13 +132,13 @@ export class World{
    this.fatherShadow.visible=false;
    this.scene.add(this.fatherShadow);
   }
-  if(!this.confession&&!this.reunion)this.portal?.setState(g.portal);
+  if(!this.confession&&!this.reunion&&!this.endingShot)this.portal?.setState(g.portal);
   if(this.fusePickup)this.fusePickup.visible=!g.inventory.includes('portal_fuse');
   if(this.safeDoor)this.safeDoor.rotation.y=g.safe_door_angle??(g.safe_open?-1.25:0);
   if(this.caseReel)this.caseReel.visible=!g.inventory.includes('fatherlog');
   const sergey=!!g.npc_position;
   if(this.collision&&wasSergey!==sergey)this.collision=new StationCollision(g.solids||[],g.bounds,g.player_radius||.43);
-  this.npc.visible=sergey||!!this.departure||!!this.confession;this.npcShadow.visible=sergey;
+  if(!this.endingShot)this.npc.visible=sergey||!!this.departure||!!this.confession;this.npcShadow.visible=sergey&&!this.endingShot;
  }
  build(g){
   const oldMaterials=new Set(),oldTextures=new Set(),mapKeys=['map','normalMap','roughnessMap','bumpMap','metalnessMap','emissiveMap','alphaMap'];for(const c of [...this.level.children]){this.level.remove(c);c.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.geometry?.dispose();for(const m of Array.isArray(o.material)?o.material:o.material?[o.material]:[]){oldMaterials.add(m);for(const key of mapKeys){const tex=m[key];if(tex&&!tex.userData.keep)oldTextures.add(tex);}}});}oldMaterials.forEach(m=>m.dispose());oldTextures.forEach(t=>t.dispose());
@@ -150,7 +150,32 @@ export class World{
   box(this.level,[74,.5,56],[0,-.3,0],surfaceMaterial('floor',stage,[4,3],q));box(this.level,[72,.08,54],[0,-.02,0],surfaceMaterial('floor',stage,[9,7],q));
   // Real room openings connect four wings to a tall turbine hall.
   const wallBox=(sz,pos,m)=>box(this.level,sz,pos,m);
-  for(const z of [-27.2,27.2]){wallBox([73,2.1,.45],[0,1,z],plaster);wallBox([73,1.25,.45],[0,5.9,z],plaster);box(this.level,[73,.12,.5],[0,2.12,z],base);for(let x=-36;x<=36;x+=8){wallBox([.55,4.2,.55],[x,3.6,z],plaster);box(this.level,[7.5,.08,.16],[x+4,3.6,z],steel);box(this.level,[.09,3.2,.16],[x+4,3.75,z],steel);}}
+  const doorGap=2.7,doorZ=27.2;
+  for(const z of [-27.2,27.2]){
+   const entrance=z===doorZ,side=(73-doorGap)/2,shift=doorGap/2+side/2;
+   if(entrance){
+    wallBox([side,2.1,.45],[-shift,1,z],plaster);wallBox([side,2.1,.45],[shift,1,z],plaster);
+    wallBox([side,1.25,.45],[-shift,5.9,z],plaster);wallBox([side,1.25,.45],[shift,5.9,z],plaster);
+    box(this.level,[side,.12,.5],[-shift,2.12,z],base);box(this.level,[side,.12,.5],[shift,2.12,z],base);
+   }else{
+    wallBox([73,2.1,.45],[0,1,z],plaster);wallBox([73,1.25,.45],[0,5.9,z],plaster);box(this.level,[73,.12,.5],[0,2.12,z],base);
+   }
+   for(let x=-36;x<=36;x+=8){
+    if(entrance&&Math.abs(x)<doorGap)continue;
+    wallBox([.55,4.2,.55],[x,3.6,z],plaster);box(this.level,[7.5,.08,.16],[x+4,3.6,z],steel);box(this.level,[.09,3.2,.16],[x+4,3.75,z],steel);
+   }
+  }
+  const jamb=metal(0x5c6866),leafMat=mat(0x6b5340,{roughness:.7});
+  wallBox([.16,2.4,.55],[-doorGap/2,1.2,doorZ],jamb);wallBox([.16,2.4,.55],[doorGap/2,1.2,doorZ],jamb);
+  box(this.level,[doorGap+.36,.16,.55],[0,2.38,doorZ],jamb);
+  const leafW=doorGap/2-.12;
+  const hinge=(x,dir)=>{
+   const pivot=new THREE.Group();pivot.position.set(x,0,doorZ);pivot.userData.swing=dir;this.level.add(pivot);
+   box(pivot,[leafW,2.08,.07],[dir*leafW/2,1.06,.24],leafMat);
+   pivot.rotation.y=dir*.2;
+   return pivot;
+  };
+  this.exitDoors=[hinge(-doorGap/2,1),hinge(doorGap/2,-1)];
   for(const x of [-36.2,36.2]){wallBox([.45,2.1,54],[x,1,0],plaster);wallBox([.45,1.25,54],[x,5.9,0],plaster);for(let z=-24;z<=24;z+=8){wallBox([.55,4.2,.55],[x,3.6,z],plaster);box(this.level,[.16,.08,7.5],[x,3.6,z+4],steel);box(this.level,[.16,3.2,.09],[x,3.75,z+4],steel);}}
   const turbines=g.layout?.turbines||[[-3,-12],[3,1],[-3,11]];
   const future=stage===2, dark=metal(0x425753), piping=metal([0x82968a,0x8d9a95,0x8cb4bb][stage]);
@@ -345,7 +370,7 @@ export class World{
    for(const z of [1.6,5.5]){const stain=mesh(new THREE.PlaneGeometry(2.6,2.7),material,this.level,[-32.738,1.7,z]);stain.rotation.y=Math.PI/2;stain.castShadow=false;stain.name='local-water-damage';}
   }
   addContactShadows(this.level,g.solids);
-  this.batchedMeshes=batchStaticMeshes(this.level,[this.safeDoor,this.reserveWheel,...this.machineRotors,...this.pickups.values(),this.level.getObjectByName('time-portal'),this.level.getObjectByName('portal-console')]);
+  this.batchedMeshes=batchStaticMeshes(this.level,[this.safeDoor,this.reserveWheel,...this.machineRotors,...this.pickups.values(),this.level.getObjectByName('time-portal'),this.level.getObjectByName('portal-console'),...(this.exitDoors||[])]);
  }
  startFlood(g,motion=true){
   const sceneState={...g,stage:1,epoch:{year:2026,name:'Авария на станции',clues:[],terminals:[],hazards:[]}};this.build(sceneState);this.releaseLook();this.setActive(false);this.inGame=true;this.player.visible=false;this.npc.visible=false;this.oldMovieFov=this.camera.fov;this.camera.fov=58;this.camera.updateProjectionMatrix();this.sun.intensity=.65;
@@ -365,13 +390,14 @@ export class World{
  departureStep(dt){
   const shot=this.departure;
   shot.age+=dt;
-  const points=[shot.origin,new THREE.Vector3(-7.6,0,17),new THREE.Vector3(-7.6,0,9),new THREE.Vector3(-16,0,9)];
-  const speed=3.4;
+  const points=[shot.origin,new THREE.Vector3(0,0,Math.min(shot.origin.z,20)),new THREE.Vector3(0,0,24.2),new THREE.Vector3(0,0,26.6),new THREE.Vector3(0,0,31.5)];
+  const speed=2.7,open=THREE.MathUtils.smoothstep(shot.age,.35,2.4);
+  for(const door of this.exitDoors||[])door.rotation.y=door.userData.swing*(.2+open*1.25);
   let distance=shot.age*speed;
   for(let i=1;i<points.length;i++){
    const from=points[i-1],to=points[i],length=from.distanceTo(to);
    if(distance<length){
-    this.npc.position.lerpVectors(from,to,distance/length);
+    this.npc.position.lerpVectors(from,to,distance/Math.max(length,.001));
     this.npc.rotation.y=Math.atan2(to.x-from.x,to.z-from.z);
     animateArrival(this.npc,dt,(shot.age%1.25)/1.25);
     return;
@@ -379,7 +405,6 @@ export class World{
    distance-=length;
   }
   this.departure=null;
-  this.npc.position.copy(shot.origin);
   this.npc.visible=false;
  }
  startConfession(){
@@ -480,6 +505,36 @@ export class World{
   this.camera.fov=shot.fov;this.camera.updateProjectionMatrix();
   this.cameraReady=false;this.portal?.setState(this.game.portal);
  }
+ startEnding(kind,motion){
+  this.releaseLook();
+  this.endingShot={kind,motion,elapsed:0,position:this.player.position.clone(),rotation:this.player.rotation.y,fov:this.camera.fov,npcVisible:this.npc.visible};
+  this.npc.visible=false;this.npcShadow.visible=false;
+  if(this.father)this.father.visible=false;
+  this.player.visible=true;
+  this.camera.fov=48;
+  this.camera.updateProjectionMatrix();
+  return true;
+ }
+ endingStep(dt){
+  const shot=this.endingShot;
+  shot.elapsed+=dt;
+  const drift=shot.motion?Math.min(1,shot.elapsed/6):1;
+  this.player.visible=true;
+  this.player.position.set(-5.5,0,19.2);
+  this.player.rotation.y=.18;
+  this.camera.position.set(-2.15-drift*.35,2.02,23.15-drift*.15);
+  this.camera.lookAt(-5.35,1.42,19.25);
+ }
+ endEnding(){
+  if(!this.endingShot)return;
+  const shot=this.endingShot;this.endingShot=null;
+  this.player.position.copy(shot.position);
+  this.player.rotation.y=shot.rotation;
+  this.npc.visible=shot.npcVisible;
+  this.camera.fov=shot.fov;this.camera.updateProjectionMatrix();
+  this.cameraReady=false;
+  if(this.game)this.portal?.setState(this.game.portal);
+ }
  setMemory(v){this.atmosphere?.setMemory(v);if(!v&&this.game)this.atmosphere?.apply(this,this.game.stage);}
  pulseValve(){if(this.reserveWheel)this.reserveWheel.rotation.z=0;}
  footSurface(){
@@ -495,7 +550,7 @@ export class World{
   const p=this.position(), dist=q=>Math.hypot(p[0]-q[0],p[1]-q[1]);
   const targets=[];
   if(g.npc_position)targets.push({type:'npc',pos:g.npc_position,height:1.36,name:'Сергей Морозов',verb:'Поговорить'});
-  if(g.portal)targets.push({type:'travel',pos:g.portal.console,height:1.17,name:'Щиток портала',verb:g.portal.repaired?'Настроить':g.inventory?.includes('portal_fuse')?'Замкнуть цепь':'Осмотреть'});
+  if(g.portal)targets.push({type:'travel',pos:g.portal.console,height:1.17,name:'Щиток портала',verb:g.portal.repaired?'Настроить':g.inventory?.includes('portal_fuse')?'Собрать пазл':'Осмотреть'});
   if(g.stage===0)targets.push({type:'bypass',pos:g.valve_position,height:1.25,name:'Западный клапан',verb:'Переключить'});
   if(g.stage===1)targets.push({type:'finale',pos:g.beacon_position,height:.94,name:'Аварийный пульт',verb:'Открыть'},
     {type:'safe',pos:g.safe_position,height:1,name:'Архивный сейф',verb:'Открыть'});
@@ -533,6 +588,7 @@ export class World{
  cameraStep(dt){
   if(this.confession){this.confessionStep(dt);return;}
   if(this.reunion){this.reunionStep(dt);return;}
+  if(this.endingShot){this.endingStep(dt);return;}
   if(this.floodCinematic){this.floodStep(dt);return;}
   const p=this.player.position;if(!this.inGame){this.player.visible=true;const target=new THREE.Vector3(31,29,48);this.camera.position.lerp(target,.06);this.camera.lookAt(0,1,0);this.cameraReady=false;return;}
   if(!this.active&&this.cameraReady)return;
@@ -558,7 +614,7 @@ export class World{
 
   this.cameraReady=true;
  }
- drawMap(){const c=document.getElementById('mini-map');if(!c||!this.game)return;const ctx=c.getContext('2d'),sx=x=>10+(x+36)*2.5,sz=z=>5+(z+27)*2.5;ctx.clearRect(0,0,200,146);ctx.fillStyle='#172327';ctx.fillRect(0,0,200,146);ctx.strokeStyle='#697774';ctx.strokeRect(10,5,180,135);ctx.fillStyle='#647471';for(const [x,z,w,d] of this.game.walls)ctx.fillRect(sx(x-w/2),sz(z-d/2),Math.max(1,w*2.5),Math.max(1,d*2.5));ctx.fillStyle='#bfcbc4';ctx.font='8px system-ui';ctx.textAlign='center';for(const [n,x,z] of [['АРХИВ',-24,-24],['ТУРБИНЫ',24,-24],['ДИСПЕТЧЕРСКАЯ',22,14],['МАСТЕРСКАЯ',-24,24],['ПУЛЬТ',-6,24]])ctx.fillText(n,sx(x),sz(z));const p=this.player.position;ctx.fillStyle='#c28a39';for(const q of this.game.epoch.clues)if((!q.requires||this.game.repairs.valve)&&Math.hypot(p.x-q.pos[0],p.z-q.pos[1])<8)ctx.fillRect(sx(q.pos[0])-2,sz(q.pos[1])-2,4,4);const goal=this.game.objective;
+ drawMap(){const c=document.getElementById('mini-map');if(!c||!this.game)return;const ctx=c.getContext('2d'),sx=x=>10+(x+36)*2.5,sz=z=>5+(z+27)*2.5;ctx.clearRect(0,0,200,146);ctx.fillStyle='#172327';ctx.fillRect(0,0,200,146);ctx.strokeStyle='#697774';ctx.strokeRect(10,5,180,135);ctx.fillStyle='#647471';for(const [x,z,w,d] of this.game.walls)ctx.fillRect(sx(x-w/2),sz(z-d/2),Math.max(1,w*2.5),Math.max(1,d*2.5));ctx.font='bold 8px system-ui';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#102028';ctx.fillStyle='#f7f4ea';for(const [n,x,z] of [['АРХИВ',-24,-24],['ТУРБИНЫ',24,-24],['ДИСПЕТЧЕРСКАЯ',22,14],['МАСТЕРСКАЯ',-24,24],['ПУЛЬТ',-6,24]]){ctx.strokeText(n,sx(x),sz(z));ctx.fillText(n,sx(x),sz(z));}const p=this.player.position;ctx.fillStyle='#c28a39';for(const q of this.game.epoch.clues)if((!q.requires||this.game.repairs.valve)&&Math.hypot(p.x-q.pos[0],p.z-q.pos[1])<8)ctx.fillRect(sx(q.pos[0])-2,sz(q.pos[1])-2,4,4);const goal=this.game.objective;
  if(goal&&(goal.stage===this.game.stage||goal.target[0]===this.game.portal?.position[0]&&goal.target[1]===this.game.portal?.position[1])){
   const [x,z]=goal.target;
   ctx.strokeStyle='#f3bb64';ctx.lineWidth=1.4;ctx.beginPath();

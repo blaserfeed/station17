@@ -37,7 +37,7 @@ const shots=[
     }
     if(!state.game.portal.repaired){
      await act('collect',{id:'portal_fuse',position:[7.5,23]});
-     await act('portal_repair',{position:state.game.portal.console,circuit:[1,0,3,2]});
+     await act('portal_repair',{position:state.game.portal.console,circuit:[0,1,2,3,4,5,6,7,8]});
     }
     await act('portal_open',{target,position:state.game.portal.console});
     await act('travel',{position:state.game.portal.position});
